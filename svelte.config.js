@@ -15,7 +15,7 @@ const config = {
 			base: dev ? '' : '/svelte-dnd-list',
 		},
 		prerender: {
-			crawl: false,
+			crawl: true,
 			default: true,
 		},
 	}
