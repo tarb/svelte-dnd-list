@@ -6,7 +6,7 @@ A very lightweight, dependency free and simple drag and drop library for Svelte.
 
 ## Getting Started
 
-Below is a very simple example that shows reordering the array of numbers in a vertical list. [You can play with this example here.](https://tarb.github.io/simple)
+Below is a very simple example that shows reordering the array of numbers in a vertical list. [You can play with this example here.](https://tarb.github.io/svelte-dnd-list/simple)
 
 ```svelte
 <svelte:options immutable={true} />
@@ -50,4 +50,5 @@ Below is a very simple example that shows reordering the array of numbers in a v
 
 ## Full Featured Example
 
-You can find a more featured example with multiple lists, item morphing and programmatic moving here. [Full example.](https://tarb.github.io/)
+You can find a more featured example with multiple lists, item morphing and programmatic moving here. [Full example.](https://tarb.github.io/svelte-dnd-list/)
+

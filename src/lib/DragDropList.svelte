@@ -22,7 +22,7 @@
 	export let priority = 1;
 	export let itemClass = '';
 	export let zoneClass = '';
-	export let keyFn: (index: number) => any = i => i;
+	export let keyFn: (index: number) => any = (i) => i;
 	export let useHandle = false;
 
 	export const dropzone: DropZone = new type(id, priority, itemCount, itemSize);
@@ -73,12 +73,30 @@
 			return;
 		}
 
-		// set up drag
-		down = true;
-		document.addEventListener('mousemove', onDrag);
-		document.addEventListener('mouseup', onDragEnd);
+		document.addEventListener('mousemove', onMouseDrag);
+		document.addEventListener('mouseup', onMouseDragEnd);
+
 		document.body.style.cursor = 'grabbing';
 
+		onDown({pageX: e.pageX, pageY: e.pageY}, index);
+		onMouseDrag(e);
+	}
+
+	function onTouchDown(e: TouchEvent, index: number) {
+		if (useHandle && (e.target as HTMLDivElement).closest(HANDLE_SELECTOR) === null) {
+			return;
+		}
+
+		document.addEventListener('touchmove', onTouchDrag);
+		document.addEventListener('touchend', onTouchDragEnd);
+
+		onDown({pageX: e.touches[0].pageX, pageY: e.touches[0].pageY}, index);
+		onTouchDrag(e);
+	}
+
+	function onDown(pos: { pageX: number, pageY: number }, index: number) {
+		// set up drag
+		down = true;
 		const el = dropzone.items[index];
 		const br = el.getBoundingClientRect();
 
@@ -101,8 +119,8 @@
 			sourceZone: dropzone,
 			destZone: dropzone,
 			bounding: {
-				dragLeft: e.pageX - br.left,
-				dragTop: e.pageY - br.top,
+				dragLeft: pos.pageX - br.left,
+				dragTop: pos.pageY - br.top,
 				left: br.left,
 				top: br.top,
 				bottom: br.bottom,
@@ -112,12 +130,22 @@
 			},
 			onMoveResolve: undefined
 		};
+	}
 
-		// fire off a move event
+	function onMouseDrag(e: MouseEvent) {
 		onDrag(e);
 	}
 
-	function onDrag(e: MouseEvent) {
+	function onTouchDrag(e: TouchEvent) {
+		onDrag({
+			pageX: e.touches[0].pageX,
+			pageY: e.touches[0].pageY,
+			clientX: e.touches[0].clientX,
+			clientY: e.touches[0].clientY,
+		});
+	}
+
+	function onDrag({pageX, pageY, clientX, clientY}: {pageX:number, pageY:number, clientX:number, clientY:number}) {
 		if (down) {
 			if (raf) {
 				cancelAnimationFrame(raf);
@@ -130,17 +158,17 @@
 
 				// use the mouse position, or element center to decide whether the item is over a dropzone
 				// const dragBounding = el.getBoundingClientRect();
-				const x = e.pageX //- bounding.dragLeft + dragBounding.width / 2; // middle point for item
-				const y = e.pageY //- bounding.dragTop + dragBounding.height / 2; // middle point for item
+				const x = pageX; //- bounding.dragLeft + dragBounding.width / 2; // middle point for item
+				const y = pageY; //- bounding.dragTop + dragBounding.height / 2; // middle point for item
 
 				const tx =
-					e.clientX -
+					clientX -
 					(bounding.dragLeft + bounding.left) +
 					-sourceZone.el.scrollLeft +
 					sourceZone.dragXOffset(sourceIndex);
 
 				const ty =
-					e.clientY -
+					clientY -
 					(bounding.dragTop + bounding.top) +
 					-sourceZone.el.scrollTop +
 					sourceZone.dragYOffset(sourceIndex);
@@ -228,11 +256,28 @@
 		}
 	}
 
-	function onDragEnd(e: any) {
-		// type?
+	function onMouseDragEnd(e: MouseEvent) {
 		if (!down) {
 			return;
 		}
+		document.removeEventListener('mousemove', onMouseDrag);
+		document.removeEventListener('mouseup', onMouseDragEnd);
+		document.body.style.cursor = '';
+
+		onDragEnd();
+
+	}
+
+	function onTouchDragEnd(e: TouchEvent) {
+		if (!down) {
+			return;
+		}
+		document.removeEventListener('touchmove', onTouchDrag);
+		document.removeEventListener('touchend', onTouchDragEnd);
+		onDragEnd();
+	}
+
+	function onDragEnd() {	
 		down = false;
 
 		if (raf) {
@@ -243,9 +288,6 @@
 		const hoverIndex = dragging.hoverIndex ?? sourceIndex;
 
 		el.addEventListener('transitionend', finalizeDrag);
-		document.removeEventListener('mousemove', onDrag);
-		document.removeEventListener('mouseup', onDragEnd);
-		document.body.style.cursor = '';
 
 		let tx: number,
 			ty: number,
@@ -345,7 +387,12 @@
 		dragging = undefined;
 	}
 
-	export async function move(srcIndex: number, destIndex: number, destZone: DropZone, transitionDur: number = 500) {
+	export async function move(
+		srcIndex: number,
+		destIndex: number,
+		destZone: DropZone,
+		transitionDur: number = 500
+	) {
 		return new Promise<void>((resolve, reject) => {
 			if (dragging !== undefined) {
 				resolve();
@@ -451,6 +498,7 @@
 			style={`${dropzone.direction === Direction.Vertical ? 'height' : 'width'}: ${itemSize}px;`}
 			bind:this={dropzone.items[i]}
 			on:mousedown={(e) => onMouseDown(e, i)}
+			on:touchstart={(e) => onTouchDown(e, i)}
 		>
 			<slot
 				index={i}
@@ -506,6 +554,7 @@
 	div[data-dnditem] {
 		position: relative;
 		user-select: none;
+		touch-action: none;
 		flex-shrink: 0;
 		flex-grow: 0;
 	}
