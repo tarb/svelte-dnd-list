@@ -203,6 +203,11 @@
 		font-family: sans-serif;
 	}
 
+	.root {
+		width: 1260px;
+		margin: 0 auto;
+	}
+
 	.pool {
 		height: 100px;
 		margin-bottom: 20px;
@@ -212,13 +217,12 @@
 	.tier-lists {
 		display: flex;
 		flex-direction: row;
-		min-height: 700px;
+		height: 700px;
 		justify-content: center;
 		gap: 15px;
 	}
 
 	.tier-list {
-		width: 300px;
 		min-width: 300px;
 		padding: 8px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
