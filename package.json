@@ -1,6 +1,28 @@
 {
 	"name": "svelte-dnd-list",
-	"version": "0.0.1",
+	"version": "0.1.0",
+	"description": "Simple and lightweight Svelte drag and drop library",
+	"keywords": [
+		"svelte",
+		"drag",
+		"drop",
+		"list",
+		"sortable",
+		"component",
+		"dnd",
+		"small"
+	],
+	"homepage": "https://github.com/tarb/svelte-dnd-list",
+	"bugs": {
+		"url": "https://github.com/tarb/svelte-dnd-list/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/tarb/svelte-dnd-list.git"
+	},
+	"author": "Rob Tarbath",
+	"license": "MIT",
+	"private": false,
 	"scripts": {
 		"dev": "svelte-kit dev",
 		"build": "svelte-kit build",

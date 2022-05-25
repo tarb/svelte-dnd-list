@@ -18,10 +18,8 @@
 			<a class="tag" href={`https://twitter.com/${data?.twitter}`}>{`@${data?.twitter}`}</a>
 
 			<p class="stats">
-                <bold>{Math.floor(data?.followers / 1000)}K</bold> Followers
-                
-
-            </p>
+				<bold>{Math.floor(data?.followers / 1000)}K</bold> Followers
+			</p>
 		</div>
 		<button on:click={onRemove}>
 			<svg height="1em" width="1em" viewBox="-2 -2 50 50" focusable="false" role="presentation">
@@ -101,7 +99,6 @@
 			}
 		}
 		.stats {
-
 			font-size: 12px;
 			color: #323842;
 			margin-top: 30px;
