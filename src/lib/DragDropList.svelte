@@ -140,12 +140,10 @@
 		onDrag({
 			pageX: e.touches[0].pageX,
 			pageY: e.touches[0].pageY,
-			clientX: e.touches[0].clientX,
-			clientY: e.touches[0].clientY,
 		});
 	}
 
-	function onDrag({pageX, pageY, clientX, clientY}: {pageX:number, pageY:number, clientX:number, clientY:number}) {
+	function onDrag({pageX, pageY}: { pageX: number, pageY: number }) {
 		if (down) {
 			if (raf) {
 				cancelAnimationFrame(raf);
@@ -156,24 +154,10 @@
 				const drag = dragging;
 				const { el, sourceZone, sourceIndex, bounding } = drag;
 
-				// use the mouse position, or element center to decide whether the item is over a dropzone
-				// const dragBounding = el.getBoundingClientRect();
-				const x = pageX; //- bounding.dragLeft + dragBounding.width / 2; // middle point for item
-				const y = pageY; //- bounding.dragTop + dragBounding.height / 2; // middle point for item
+				const tx = pageX - bounding.dragLeft;
+				const ty = pageY - bounding.dragTop;
 
-				const tx =
-					clientX -
-					(bounding.dragLeft + bounding.left) +
-					-sourceZone.el.scrollLeft +
-					sourceZone.dragXOffset(sourceIndex);
-
-				const ty =
-					clientY -
-					(bounding.dragTop + bounding.top) +
-					-sourceZone.el.scrollTop +
-					sourceZone.dragYOffset(sourceIndex);
-
-				let dest = findDropZone(x, y);
+				let dest = findDropZone(pageX, pageY);
 				if (dest === sourceZone) {
 					// same zone reorder
 					// style the dragging element
@@ -186,7 +170,7 @@
 						}
 					}
 
-					const hoverIndex = dest.pointIndex(x, y);
+					const hoverIndex = dest.pointIndex(pageX, pageY);
 					if (hoverIndex !== drag.hoverIndex || enteredZone) {
 						dest.styleSourceMove(hoverIndex, sourceIndex, drag.hoverIndex !== undefined);
 						dragging = {
@@ -196,7 +180,7 @@
 						};
 					}
 
-					el.style.cssText = `z-index:1000; pointer-events:none; cursor:grabbing; height:${sourceZone.itemHeight()}px; width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
+					el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; height:${sourceZone.itemHeight()}px; width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
 				} else {
 					// new zone
 					const enteredZone = dest !== drag.destZone;
@@ -226,7 +210,7 @@
 						}
 
 						// and adjust the styles of the items and update dragging
-						const hoverIndex = dest.pointIndex(x, y);
+						const hoverIndex = dest.pointIndex(pageX, pageY);
 						if (hoverIndex !== drag.hoverIndex || enteredZone) {
 							dest.styleDestMove(hoverIndex);
 							dragging = {
@@ -236,7 +220,7 @@
 							};
 						}
 
-						el.style.cssText = `z-index:1000; pointer-events: none; cursor:grabbing; position:fixed; height:${dest.itemHeight()}px; width:${dest.itemWidth()}px; transition: height 0.2s cubic-bezier(0.2, 0, 0, 1); transform:translate(${tx}px,${ty}px); transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events: none; cursor:grabbing; position:fixed; height:${dest.itemHeight()}px; width:${dest.itemWidth()}px; transition: height 0.2s cubic-bezier(0.2, 0, 0, 1); transform:translate(${tx}px,${ty}px); transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
 					} else {
 						// style the dragging element - it keeps its source dimensions as its not inside a drop zone
 
@@ -249,7 +233,7 @@
 							};
 						}
 
-						el.style.cssText = `z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
 					}
 				}
 			});
@@ -308,48 +292,30 @@
 				}
 			}
 
-			tx =
-				sourceZone.dragXOffset(hoverIndex + widthLastOffset) -
-				sourceZone.el.scrollLeft -
-				window.scrollX;
-			ty =
-				sourceZone.dragYOffset(hoverIndex + heightLastOffset) -
-				sourceZone.el.scrollTop -
-				window.scrollY;
+			tx = sourceZone.dragXOffset(hoverIndex + widthLastOffset);
+			ty = sourceZone.dragYOffset(hoverIndex + heightLastOffset);
 
 			height = sourceZone.itemHeight();
 			width = sourceZone.itemWidth();
 			// detect when a transitionEnd event wont fire as the transition is already in the
 			// finishing position
-			forceFinal =
-				el.style.transform === `translate(${tx}px, ${ty}px)` || el.style.transform === '';
+			forceFinal = el.style.transform === `translate(${tx}px, ${ty}px)` || el.style.transform === '';
 		} else if (destZone !== undefined) {
-			const destBox = destZone.el.getBoundingClientRect();
-			const sourceBox = sourceZone.el.getBoundingClientRect();
-			tx =
-				destBox.left -
-				sourceBox.left +
-				destZone.dragXOffset(hoverIndex, destZone.count + 1) -
-				destZone.el.scrollLeft -
-				window.scrollX;
-			ty =
-				destBox.top -
-				sourceBox.top +
-				destZone.dragYOffset(hoverIndex, destZone.count + 1) -
-				destZone.el.scrollTop -
-				window.scrollY;
+			tx = destZone.dragXOffset(hoverIndex, destZone.count + 1)
+			ty = destZone.dragYOffset(hoverIndex, destZone.count + 1)
+
 			height = destZone.itemHeight();
 			width = destZone.itemWidth();
 		} else {
-			tx = sourceZone.dragXOffset(sourceIndex) - sourceZone.el.scrollLeft - window.scrollX;
-			ty = sourceZone.dragYOffset(sourceIndex) - sourceZone.el.scrollTop - window.scrollY;
+			tx = sourceZone.dragXOffset(sourceIndex);
+			ty = sourceZone.dragYOffset(sourceIndex);
 			height = sourceZone.itemHeight();
 			width = sourceZone.itemWidth();
 
 			sourceZone.styleSourceMove(sourceIndex, sourceIndex, true);
 		}
 
-		el.style.cssText = `z-index:1000; position:fixed; height:${height}px; width:${width}px; transform:translate(${tx}px,${ty}px); transition:transform 0.2s cubic-bezier(0.2,0,0,1), height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+		el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; position:fixed; height:${height}px; width:${width}px; transform:translate(${tx}px,${ty}px); transition:transform 0.2s cubic-bezier(0.2,0,0,1), height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
 
 		// if a force was detected as needed, fire it off here
 		if (forceFinal) {
@@ -377,7 +343,7 @@
 			: undefined;
 
 		onDrop({ from, to });
-		// dispatchEvent("drop", { from, to } as DropEvent);
+		
 		sourceZone.el.removeChild(placeholder);
 
 		resetZones.forEach((zone) => zone.styleRemove());
@@ -406,8 +372,8 @@
 			}
 
 			{
-				const tx = /*bounding.left - dropzone.el.scrollLeft +*/ dropzone.dragXOffset(srcIndex);
-				const ty = /*bounding.top - dropzone.el.scrollTop +*/ dropzone.dragYOffset(srcIndex);
+				const tx = dropzone.dragXOffset(srcIndex);
+				const ty = dropzone.dragYOffset(srcIndex);
 				const height = dropzone.itemHeight();
 				const width = dropzone.itemWidth();
 
@@ -453,25 +419,15 @@
 
 			// style the moving element
 			{
-				const sourceBox = dropzone.el.getBoundingClientRect();
-				const destBox = destZone.el.getBoundingClientRect();
-
-				const tx =
-					destBox.left -
-					sourceBox.left +
-					destZone.dragXOffset(destIndex, destZone.count + 1) -
-					destZone.el.scrollLeft;
-				const ty =
-					destBox.top -
-					sourceBox.top +
-					destZone.dragYOffset(destIndex, destZone.count + 1) -
-					destZone.el.scrollTop;
+				const tx = destZone.dragXOffset(destIndex, destZone.count + 1);
+				const ty = destZone.dragYOffset(destIndex, destZone.count + 1);
 				const height = destZone.itemHeight();
 				const width = destZone.itemWidth();
 
 				el.style.cssText = `
                 z-index: 1000; 
                 position: fixed; 
+				top:0; left: 0;
                 height: ${height}px; 
                 width: ${width}px; 
                 transform: translate(${tx}px,${ty}px); 

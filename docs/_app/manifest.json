@@ -1,6 +1,6 @@
 {
   ".svelte-kit/runtime/client/start.js": {
-    "file": "start-ee80ceb7.js",
+    "file": "start-64a50891.js",
     "src": ".svelte-kit/runtime/client/start.js",
     "isEntry": true,
     "imports": [
@@ -33,27 +33,27 @@
     ]
   },
   "src/routes/index.svelte": {
-    "file": "pages/index.svelte-9000804b.js",
+    "file": "pages/index.svelte-d20b4f8a.js",
     "src": "src/routes/index.svelte",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_index-3d005263.js",
-      "_VerticalDropZone-8c2a0369.js",
+      "_VerticalDropZone-d59de3f0.js",
       "_paths-396f020f.js"
     ],
     "css": [
-      "assets/pages/index.svelte-9480ee81.css"
+      "assets/pages/index.svelte-ad8944ce.css"
     ]
   },
   "src/routes/simple.svelte": {
-    "file": "pages/simple.svelte-cbd61064.js",
+    "file": "pages/simple.svelte-d64a4dd7.js",
     "src": "src/routes/simple.svelte",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_index-3d005263.js",
-      "_VerticalDropZone-8c2a0369.js"
+      "_VerticalDropZone-d59de3f0.js"
     ],
     "css": [
       "assets/pages/simple.svelte-b04db504.css"
@@ -65,8 +65,8 @@
   "_paths-396f020f.js": {
     "file": "chunks/paths-396f020f.js"
   },
-  "_VerticalDropZone-8c2a0369.js": {
-    "file": "chunks/VerticalDropZone-8c2a0369.js",
+  "_VerticalDropZone-d59de3f0.js": {
+    "file": "chunks/VerticalDropZone-d59de3f0.js",
     "imports": [
       "_index-3d005263.js"
     ],

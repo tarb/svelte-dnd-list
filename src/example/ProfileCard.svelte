@@ -101,7 +101,7 @@
 		.stats {
 			font-size: 12px;
 			color: #323842;
-			margin-top: 30px;
+			margin-top: 25px;
 		}
 	}
 </style>

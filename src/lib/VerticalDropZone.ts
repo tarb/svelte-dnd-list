@@ -23,15 +23,28 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	insideBounding(x: number, y: number): boolean {
-		const b = this.el.getBoundingClientRect();
-		return y > b.top && y < b.bottom && x > b.left && x < b.right;
+		const el = this.el;
+
+		let scrollTop = 0, scrollLeft = 0;
+		for (let e = el as HTMLElement; e; e = e.parentElement) {
+			scrollLeft += e.scrollLeft;
+			scrollTop += e.scrollTop;
+		}
+
+		const b = el.getBoundingClientRect();
+		const left = b.left + scrollLeft;
+		const right = b.right + scrollLeft;
+		const top = b.top + scrollTop;
+		const bottom = b.bottom + scrollTop;
+
+		return y > top && y < bottom && x > left && x < right;
 	}
 
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 
 		const b = el.getBoundingClientRect();
-		const top = b.top - el.scrollTop;
+		const top = b.top - el.scrollTop + window.scrollY;
 		const rawOver = Math.floor((y - top) / itemSize);
 
 		return Math.min(Math.max(rawOver, 0), count);
@@ -42,10 +55,12 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	dragXOffset(index: number): number {
-		return 0;
+		const b = this.el.getBoundingClientRect();
+		return b.left;
 	}
 	dragYOffset(index: number): number {
-		return index * this.itemSize;
+		const b = this.el.getBoundingClientRect();
+		return (index * this.itemSize) + b.top;
 	}
 
 	itemHeight(): number {

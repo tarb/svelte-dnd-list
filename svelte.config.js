@@ -11,6 +11,9 @@ const config = {
 		adapter: adapter({
 			pages: 'docs',
 		}),
+		browser: {
+			router: false
+		},
 		paths: {
 			base: dev ? '' : '/svelte-dnd-list',
 		},
