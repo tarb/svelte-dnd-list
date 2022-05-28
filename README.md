@@ -12,12 +12,12 @@ Below is a very simple example that shows reordering the array of numbers in a v
 <svelte:options immutable={true} />
 
 <script lang="ts">
-	import DragDropList, { VerticalDropZone, reorder, type DropEvent } from 'svelte-dnd-list';
+	import DragDropList, { VerticalDropZone, reorder, type DropEvent } from '$lib';
 
 	let items = [1, 2, 3, 4, 5];
 
-	function onDrop({ from, to }: DropEvent) {
-		if (!to) {
+	function onDrop({ detail: { from, to } }: CustomEvent<DropEvent>) {
+		if (!to || from === to) {
 			return;
 		}
 
@@ -25,12 +25,14 @@ Below is a very simple example that shows reordering the array of numbers in a v
 	}
 </script>
 
+<h1>Svelte Dnd List - Simple Example</h1>
+
 <DragDropList
 	id="example"
 	type={VerticalDropZone}
 	itemSize={50}
 	itemCount={items.length}
-	{onDrop}
+	on:drop={onDrop}
 	let:index
 >
 	<div>{items[index]}</div>
@@ -48,7 +50,9 @@ Below is a very simple example that shows reordering the array of numbers in a v
 </style>
 ```
 
-## Full Featured Example
+## Examples
 
-You can find a more featured example with multiple lists, item morphing and programmatic moving here. [Full example.](https://tarb.github.io/svelte-dnd-list/)
+* [Simple example](https://tarb.github.io/simple/)
+* [Programatic control](https://tarb.github.io/programatic/)
+* [Multiple lists, item morphing and programmatic moving.](https://tarb.github.io/svelte-dnd-list/)
 

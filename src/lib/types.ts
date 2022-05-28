@@ -61,16 +61,20 @@ export interface Dragging {
 	el: HTMLDivElement;
 	resetZones: Set<DropZone>;
 
-	bounding: {
-		dragTop: number;
-		dragLeft: number;
-		top: number;
-		bottom: number;
-		left: number;
-		right: number;
-		height: number;
-		width: number;
-	};
+	// position in element where click originated
+	dragTop: number;
+	dragLeft: number;
 
+	//
 	onMoveResolve?: () => void;
+}
+
+export interface Click {
+	initPageY: number;
+	initPageX: number;
+	dragTop: number;
+	dragLeft: number;
+	sourceZone: DropZone;
+	sourceIndex: number;
+	el: HTMLDivElement;
 }

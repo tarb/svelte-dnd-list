@@ -8,7 +8,7 @@
 		type Dragging
 	} from '$lib';
 	import data, { type Muppet } from './data';
-	import ProfileCard from './ProfileCard.svelte';
+	import MuppetCard from './MuppetCard.svelte';
 
 	let poolList: DragDropList;
 	let tierSList: DragDropList;
@@ -27,8 +27,8 @@
 	const shouldCompact = (drag: Dragging | undefined, def: boolean): boolean =>
 		drag ? drag.destZone === undefined || drag.destZone.id === 'pool' : def;
 
-	function onDrop({ from, to }: DropEvent) {
-		if (!to) {
+	function onDrop({ detail: { from, to } }: CustomEvent<DropEvent>) {
+		if (!to || from === to) {
 			return;
 		}
 
@@ -92,12 +92,12 @@
 			id="pool"
 			type={HorizontalCenterDropZone}
 			itemSize={100}
-			keyFn={i => pool[i].name}
-			{onDrop}
+			keyFn={(i) => pool[i].name}
+			on:drop={onDrop}
 			let:index
 			let:drag
 		>
-			<ProfileCard
+			<MuppetCard
 				data={pool[index]}
 				dragging={drag?.sourceIndex === index}
 				compact={shouldCompact(drag, true)}
@@ -115,12 +115,12 @@
 				useHandle
 				type={VerticalDropZone}
 				itemSize={100}
-				{onDrop}
-				keyFn={i => tierC[i].name}
+				on:drop={onDrop}
+				keyFn={(i) => tierC[i].name}
 				let:index
 				let:drag
 			>
-				<ProfileCard
+				<MuppetCard
 					data={tierC[index]}
 					compact={shouldCompact(drag, false)}
 					dragging={drag?.sourceIndex === index}
@@ -137,12 +137,12 @@
 				useHandle
 				type={VerticalDropZone}
 				itemSize={100}
-				{onDrop}
-				keyFn={i => tierB[i].name}
+				on:drop={onDrop}
+				keyFn={(i) => tierB[i].name}
 				let:index
 				let:drag
 			>
-				<ProfileCard
+				<MuppetCard
 					data={tierB[index]}
 					compact={shouldCompact(drag, false)}
 					dragging={drag?.sourceIndex === index}
@@ -159,12 +159,12 @@
 				useHandle
 				type={VerticalDropZone}
 				itemSize={100}
-				{onDrop}
-				keyFn={i => tierA[i].name}
+				on:drop={onDrop}
+				keyFn={(i) => tierA[i].name}
 				let:index
 				let:drag
 			>
-				<ProfileCard
+				<MuppetCard
 					data={tierA[index]}
 					compact={shouldCompact(drag, false)}
 					dragging={drag?.sourceIndex === index}
@@ -181,12 +181,12 @@
 				useHandle
 				type={VerticalDropZone}
 				itemSize={100}
-				{onDrop}
-				keyFn={i => tierS[i].name}
+				on:drop={onDrop}
+				keyFn={(i) => tierS[i].name}
 				let:index
 				let:drag
 			>
-				<ProfileCard
+				<MuppetCard
 					data={tierS[index]}
 					compact={shouldCompact(drag, false)}
 					dragging={drag?.sourceIndex === index}

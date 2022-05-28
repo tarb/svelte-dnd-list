@@ -2,22 +2,30 @@
 
 <script lang="ts" context="module">
 	const HANDLE_SELECTOR = '[data-dndhandle]';
+	const DRAG_TOLERANCE = 5; //px
 	const dropzones = new Array<DropZone>();
 
-	let down = false;
+	let click: Click = undefined;
+	let active: Dragging = undefined;
 	let raf: number | undefined; // animation frame
 </script>
 
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
 	import { Direction, EventType } from './types';
-	import type { Dragging, DropEvent, DropZone, Destination, DropZoneConstuctable } from './types';
+	import type {
+		Dragging,
+		Click,
+		DropEvent,
+		DropZone,
+		Destination,
+		DropZoneConstuctable
+	} from './types';
 
 	export let id: string;
 	export let itemCount: number;
 	export let itemSize: number;
 	export let type: DropZoneConstuctable;
-	export let onDrop: (ev: DropEvent) => void;
 
 	export let priority = 1;
 	export let itemClass = '';
@@ -26,6 +34,9 @@
 	export let useHandle = false;
 
 	export const dropzone: DropZone = new type(id, priority, itemCount, itemSize);
+	const dispatch = createEventDispatcher();
+
+	// use the module variable 'active' but update this on significant changes so the the props vars update
 	let dragging: Dragging;
 	let items: undefined[] = new Array(itemCount);
 
@@ -76,10 +87,7 @@
 		document.addEventListener('mousemove', onMouseDrag);
 		document.addEventListener('mouseup', onMouseDragEnd);
 
-		document.body.style.cursor = 'grabbing';
-
-		onDown({pageX: e.pageX, pageY: e.pageY}, index);
-		onMouseDrag(e);
+		onDown({ pageX: e.pageX, pageY: e.pageY }, index);
 	}
 
 	function onTouchDown(e: TouchEvent, index: number) {
@@ -90,45 +98,21 @@
 		document.addEventListener('touchmove', onTouchDrag);
 		document.addEventListener('touchend', onTouchDragEnd);
 
-		onDown({pageX: e.touches[0].pageX, pageY: e.touches[0].pageY}, index);
-		onTouchDrag(e);
+		onDown({ pageX: e.touches[0].pageX, pageY: e.touches[0].pageY }, index);
 	}
 
-	function onDown(pos: { pageX: number, pageY: number }, index: number) {
-		// set up drag
-		down = true;
+	function onDown({ pageX, pageY }: { pageX: number; pageY: number }, index: number) {
 		const el = dropzone.items[index];
 		const br = el.getBoundingClientRect();
 
-		const placeholder = document.createElement('div');
-		placeholder.style.cssText = dropzone.placeholderStyleStr();
-		placeholder.setAttribute('data-dndplaceholder', '');
-		dropzone.el.appendChild(placeholder);
-
-		if (dragging !== undefined) {
-			finalizeDrag();
-		}
-
-		dragging = {
-			type: EventType.User,
+		click = {
 			el,
-			placeholder,
-			resetZones: new Set([dropzone]),
+			initPageX: pageX,
+			initPageY: pageY,
 			sourceIndex: index,
-			hoverIndex: undefined,
-			sourceZone: dropzone,
-			destZone: dropzone,
-			bounding: {
-				dragLeft: pos.pageX - br.left,
-				dragTop: pos.pageY - br.top,
-				left: br.left,
-				top: br.top,
-				bottom: br.bottom,
-				right: br.right,
-				height: br.height,
-				width: br.width
-			},
-			onMoveResolve: undefined
+			dragLeft: pageX - br.left,
+			dragTop: pageY - br.top,
+			sourceZone: dropzone
 		};
 	}
 
@@ -139,23 +123,56 @@
 	function onTouchDrag(e: TouchEvent) {
 		onDrag({
 			pageX: e.touches[0].pageX,
-			pageY: e.touches[0].pageY,
+			pageY: e.touches[0].pageY
 		});
 	}
 
-	function onDrag({pageX, pageY}: { pageX: number, pageY: number }) {
-		if (down) {
+	function onDrag({ pageX, pageY }: { pageX: number; pageY: number }) {
+		if (
+			active === undefined &&
+			(Math.abs(pageX - click.initPageX) > DRAG_TOLERANCE ||
+				Math.abs(pageY - click.initPageY) > DRAG_TOLERANCE)
+		) {
+			if (active) {
+				finalizeDrag();
+			}
+
+			const placeholder = document.createElement('div');
+			placeholder.style.cssText = dropzone.placeholderStyleStr();
+			placeholder.setAttribute('data-dndplaceholder', '');
+			dropzone.el.appendChild(placeholder);
+
+			active = {
+				type: EventType.User,
+				el: click.el,
+				placeholder,
+				resetZones: new Set([dropzone]),
+				sourceIndex: click.sourceIndex,
+				hoverIndex: undefined,
+				sourceZone: click.sourceZone,
+				destZone: dropzone,
+				dragLeft: click.dragLeft,
+				dragTop: click.dragTop,
+				onMoveResolve: undefined
+			};
+			dragging = active; // reactive value
+			click = undefined;
+
+			document.body.style.cursor = 'grabbing';
+		}
+
+		if (active) {
 			if (raf) {
 				cancelAnimationFrame(raf);
 			}
 			raf = requestAnimationFrame(() => {
 				raf = undefined;
 
-				const drag = dragging;
-				const { el, sourceZone, sourceIndex, bounding } = drag;
+				const drag = active;
+				const { el, sourceZone, sourceIndex, dragLeft, dragTop } = drag;
 
-				const tx = pageX - bounding.dragLeft;
-				const ty = pageY - bounding.dragTop;
+				const tx = pageX - dragLeft;
+				const ty = pageY - dragTop;
 
 				let dest = findDropZone(pageX, pageY);
 				if (dest === sourceZone) {
@@ -173,11 +190,12 @@
 					const hoverIndex = dest.pointIndex(pageX, pageY);
 					if (hoverIndex !== drag.hoverIndex || enteredZone) {
 						dest.styleSourceMove(hoverIndex, sourceIndex, drag.hoverIndex !== undefined);
-						dragging = {
-							...dragging,
+						active = {
+							...active,
 							hoverIndex: hoverIndex,
 							destZone: dest
 						};
+						dragging = active;
 					}
 
 					el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; height:${sourceZone.itemHeight()}px; width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
@@ -213,11 +231,12 @@
 						const hoverIndex = dest.pointIndex(pageX, pageY);
 						if (hoverIndex !== drag.hoverIndex || enteredZone) {
 							dest.styleDestMove(hoverIndex);
-							dragging = {
-								...dragging,
+							active = {
+								...active,
 								hoverIndex: hoverIndex,
 								destZone: dest
 							};
+							dragging = active;
 						}
 
 						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events: none; cursor:grabbing; position:fixed; height:${dest.itemHeight()}px; width:${dest.itemWidth()}px; transition: height 0.2s cubic-bezier(0.2, 0, 0, 1); transform:translate(${tx}px,${ty}px); transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
@@ -226,11 +245,12 @@
 
 						// first render out of a dropzone, update dragging
 						if (enteredZone) {
-							dragging = {
-								...dragging,
+							active = {
+								...active,
 								hoverIndex: -1,
 								destZone: undefined
 							};
+							dragging = active;
 						}
 
 						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
@@ -241,36 +261,36 @@
 	}
 
 	function onMouseDragEnd(e: MouseEvent) {
-		if (!down) {
-			return;
-		}
 		document.removeEventListener('mousemove', onMouseDrag);
 		document.removeEventListener('mouseup', onMouseDragEnd);
-		document.body.style.cursor = '';
+
+		if (!active) {
+			return;
+		}
 
 		onDragEnd();
-
 	}
 
 	function onTouchDragEnd(e: TouchEvent) {
-		if (!down) {
-			return;
-		}
 		document.removeEventListener('touchmove', onTouchDrag);
 		document.removeEventListener('touchend', onTouchDragEnd);
+
+		if (active) {
+			return;
+		}
+
 		onDragEnd();
 	}
 
-	function onDragEnd() {	
-		down = false;
-
+	function onDragEnd() {
 		if (raf) {
 			cancelAnimationFrame(raf);
 		}
 
-		const { el, destZone, sourceZone, sourceIndex } = dragging;
-		const hoverIndex = dragging.hoverIndex ?? sourceIndex;
+		const { el, destZone, sourceZone, sourceIndex } = active;
+		const hoverIndex = active.hoverIndex ?? sourceIndex;
 
+		document.body.style.cursor = '';
 		el.addEventListener('transitionend', finalizeDrag);
 
 		let tx: number,
@@ -299,10 +319,11 @@
 			width = sourceZone.itemWidth();
 			// detect when a transitionEnd event wont fire as the transition is already in the
 			// finishing position
-			forceFinal = el.style.transform === `translate(${tx}px, ${ty}px)` || el.style.transform === '';
+			forceFinal =
+				el.style.transform === `translate(${tx}px, ${ty}px)` || el.style.transform === '';
 		} else if (destZone !== undefined) {
-			tx = destZone.dragXOffset(hoverIndex, destZone.count + 1)
-			ty = destZone.dragYOffset(hoverIndex, destZone.count + 1)
+			tx = destZone.dragXOffset(hoverIndex, destZone.count + 1);
+			ty = destZone.dragYOffset(hoverIndex, destZone.count + 1);
 
 			height = destZone.itemHeight();
 			width = destZone.itemWidth();
@@ -324,8 +345,8 @@
 	}
 
 	function finalizeDrag(ev?: TransitionEvent) {
-		const { el, destZone, sourceZone, sourceIndex, resetZones, placeholder } = dragging;
-		const hoverIndex = dragging.hoverIndex ?? sourceIndex; // if no drag action took place hover may be undef
+		const { el, destZone, sourceZone, sourceIndex, resetZones, placeholder } = active;
+		const hoverIndex = active.hoverIndex ?? sourceIndex; // if no drag action took place hover may be undef
 
 		if (ev && ev.target !== el) {
 			return;
@@ -339,18 +360,23 @@
 			index: sourceIndex
 		};
 		const to: Destination | undefined = destZone
-			? { dropZoneID: destZone.id, index: hoverIndex }
+			? destZone === sourceZone && hoverIndex === sourceIndex
+				? from
+				: { dropZoneID: destZone.id, index: hoverIndex }
 			: undefined;
 
-		onDrop({ from, to });
-		
-		sourceZone.el.removeChild(placeholder);
+		if (placeholder) {
+			sourceZone.el.removeChild(placeholder);
+		}
 
 		resetZones.forEach((zone) => zone.styleRemove());
 		el.removeEventListener('transitionend', finalizeDrag);
 
-		dragging.onMoveResolve?.();
+		active.onMoveResolve?.();
+		active = undefined;
 		dragging = undefined;
+
+		dispatch('drop', { from, to } as DropEvent);
 	}
 
 	export async function move(
@@ -360,7 +386,7 @@
 		transitionDur: number = 500
 	) {
 		return new Promise<void>((resolve, reject) => {
-			if (dragging !== undefined) {
+			if (active !== undefined) {
 				resolve();
 				return;
 			}
@@ -371,6 +397,7 @@
 				return;
 			}
 
+			// initial style for begining of element transition
 			{
 				const tx = dropzone.dragXOffset(srcIndex);
 				const ty = dropzone.dragYOffset(srcIndex);
@@ -380,50 +407,43 @@
 				el.style.cssText = `z-index:1000; height:${height}px; width:${width}px; position:fixed; transform:translate(${tx}px,${ty}px)`;
 			}
 
-			// add placeholder, and style the moving element - pulling out out of flow
-			const placeholder = document.createElement('div');
-			placeholder.style.cssText = dropzone.placeholderStyleStr();
-			placeholder.setAttribute('data-dndplaceholder', '');
-			dropzone.el.appendChild(placeholder);
-
 			// style the containers
 			dropzone.styleSourceMove(srcIndex, srcIndex, false);
-			setTimeout(() => {
-				dragging?.type === EventType.Programatic && dropzone.styleSourceMissing(srcIndex);
-			}, transitionDur * 0.4);
-			destZone.styleDestMove(destIndex);
+			if (destZone !== dropzone) {
+				setTimeout(() => {
+					dragging?.type === EventType.Programatic && dropzone.styleSourceMissing(srcIndex);
+				}, transitionDur * 0.4);
+				destZone.styleDestMove(destIndex);
+			} else {
+				setTimeout(() => {
+					dragging?.type === EventType.Programatic &&
+						dropzone.styleSourceMove(destIndex, srcIndex, true);
+				}, transitionDur * 0.25);
+			}
 
-			const br = el.getBoundingClientRect();
-
-			dragging = {
+			active = {
 				type: EventType.Programatic,
 				el,
-				placeholder,
+				placeholder: undefined,
 				resetZones: new Set([dropzone, destZone]),
 				sourceIndex: srcIndex,
 				hoverIndex: destIndex,
 				sourceZone: dropzone,
 				destZone: destZone,
-				bounding: {
-					dragLeft: 0,
-					dragTop: 0,
-					left: br.left,
-					top: br.top,
-					bottom: br.bottom,
-					right: br.right,
-					height: br.height,
-					width: br.width
-				},
+				dragLeft: 0,
+				dragTop: 0,
 				onMoveResolve: resolve
 			};
+			dragging = active;
 
-			// style the moving element
+			// style the moving element, to its final position/transition
 			{
 				const tx = destZone.dragXOffset(destIndex, destZone.count + 1);
 				const ty = destZone.dragYOffset(destIndex, destZone.count + 1);
 				const height = destZone.itemHeight();
 				const width = destZone.itemWidth();
 
+				el.addEventListener('transitionend', finalizeDrag);
 				el.style.cssText = `
                 z-index: 1000; 
                 position: fixed; 
@@ -436,8 +456,6 @@
                     height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
                     width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);`;
 			}
-
-			el.addEventListener('transitionend', finalizeDrag);
 		});
 	}
 </script>
@@ -447,8 +465,8 @@
 		<div
 			data-dnditem
 			class={`${itemClass} ${
-				dragging?.sourceIndex === i
-					? `dragging ${dragging.type === EventType.User ? 'user' : 'prog'}`
+				active?.sourceIndex === i || dragging === null // this dragging === null will never be true, but forces the statement to be reactive
+					? `dragging ${active.type === EventType.User ? 'user' : 'prog'}`
 					: ''
 			}`}
 			style={`${dropzone.direction === Direction.Vertical ? 'height' : 'width'}: ${itemSize}px;`}

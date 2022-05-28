@@ -1,3 +1,6 @@
+<!-- 
+	This is a very simple example that shows basic dragging and dropping in a veritcal list.
+ -->
 <svelte:options immutable={true} />
 
 <script lang="ts">
@@ -5,8 +8,8 @@
 
 	let items = [1, 2, 3, 4, 5];
 
-	function onDrop({ from, to }: DropEvent) {
-		if (!to) {
+	function onDrop({ detail: { from, to } }: CustomEvent<DropEvent>) {
+		if (!to || from === to) {
 			return;
 		}
 
@@ -21,7 +24,7 @@
 	type={VerticalDropZone}
 	itemSize={50}
 	itemCount={items.length}
-	{onDrop}
+	on:drop={onDrop}
 	let:index
 >
 	<div>{items[index]}</div>
