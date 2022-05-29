@@ -1,7 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts" context="module">
-	const HANDLE_SELECTOR = '[data-dndhandle]';
+	const HANDLE_SELECTOR = '[data-dnd-handle]';
 	const DRAG_TOLERANCE = 5; //px
 	const dropzones = new Array<DropZone>();
 
@@ -28,8 +28,8 @@
 	export let type: DropZoneConstuctable;
 
 	export let priority = 1;
-	export let itemClass = '';
-	export let zoneClass = '';
+	export let itemClass: string = undefined;
+	export let zoneClass: string = undefined;
 	export let keyFn: (index: number) => any = (i) => i;
 	export let useHandle = false;
 
@@ -41,6 +41,7 @@
 	let items: undefined[] = new Array(itemCount);
 
 	$: dropzone.id = id;
+	$: itemStyle = `${dropzone.direction === Direction.Vertical ? 'height' : 'width'}: ${itemSize}px;`;
 
 	$: if (itemCount != dropzone.count || itemSize !== dropzone.itemSize) {
 		dropzone.count = itemCount;
@@ -139,7 +140,7 @@
 
 			const placeholder = document.createElement('div');
 			placeholder.style.cssText = dropzone.placeholderStyleStr();
-			placeholder.setAttribute('data-dndplaceholder', '');
+			placeholder.setAttribute('data-dnd-placeholder', '');
 			dropzone.el.appendChild(placeholder);
 
 			active = {
@@ -365,6 +366,8 @@
 				: { dropZoneID: destZone.id, index: hoverIndex }
 			: undefined;
 
+		dispatch('drop', { from, to } as DropEvent);
+
 		if (placeholder) {
 			sourceZone.el.removeChild(placeholder);
 		}
@@ -375,8 +378,6 @@
 		active.onMoveResolve?.();
 		active = undefined;
 		dragging = undefined;
-
-		dispatch('drop', { from, to } as DropEvent);
 	}
 
 	export async function move(
@@ -460,16 +461,13 @@
 	}
 </script>
 
-<div data-dndzone class={`${zoneClass} ${dropzone.containerClass}`} bind:this={dropzone.el}>
+<div data-dnd-zone class={`${zoneClass} ${dropzone.containerClass}`} bind:this={dropzone.el}>
 	{#each items as _, i (keyFn(i))}
 		<div
-			data-dnditem
-			class={`${itemClass} ${
-				active?.sourceIndex === i || dragging === null // this dragging === null will never be true, but forces the statement to be reactive
-					? `dragging ${active.type === EventType.User ? 'user' : 'prog'}`
-					: ''
-			}`}
-			style={`${dropzone.direction === Direction.Vertical ? 'height' : 'width'}: ${itemSize}px;`}
+			data-dnd-item
+			data-dnd-dragging={active?.sourceIndex === i || dragging === null ? true : undefined}
+			class={itemClass}
+			style={itemStyle}
 			bind:this={dropzone.items[i]}
 			on:mousedown={(e) => onMouseDown(e, i)}
 			on:touchstart={(e) => onTouchDown(e, i)}
@@ -483,7 +481,7 @@
 </div>
 
 <style lang="scss">
-	div[data-dndzone] {
+	div[data-dnd-zone] {
 		display: flex;
 		position: relative;
 		height: 100%;
@@ -499,11 +497,11 @@
 
 		&.center {
 			&.horizontal {
-				div[data-dnditem] {
+				div[data-dnd-item] {
 					// first child or if thats dragging (non-layout pos fixed)
 					// then the next item in the list
 					&:first-child,
-					&:first-child.dragging + * {
+					&[data-dnd-dragging]:first-child + * {
 						margin-left: auto;
 					}
 					&:last-child {
@@ -511,21 +509,21 @@
 					}
 				}
 
-				:global(div[data-dndplaceholder]:first-child) {
+				:global(div[data-dnd-placeholder]:first-child) {
 					margin-left: auto;
 				}
-				:global(div[data-dndplaceholder]:last-child) {
+				:global(div[data-dnd-placeholder]:last-child) {
 					margin-right: auto;
 				}
 			}
 		}
-		:global(div[data-dndplaceholder]) {
+		:global(div[data-dnd-placeholder]) {
 			flex-shrink: 0;
 			flex-grow: 0;
 		}
 	}
 
-	div[data-dnditem] {
+	div[data-dnd-item] {
 		position: relative;
 		user-select: none;
 		touch-action: none;
@@ -533,7 +531,7 @@
 		flex-grow: 0;
 	}
 
-	:global(*[data-dndhandle]) {
+	:global(*[data-dnd-handle]) {
 		cursor: grab !important;
 	}
 </style>

@@ -160,7 +160,7 @@
 				type={VerticalDropZone}
 				itemSize={100}
 				on:drop={onDrop}
-				keyFn={(i) => tierA[i].name}
+				keyFn={i => tierA[i].name}
 				let:index
 				let:drag
 			>

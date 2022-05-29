@@ -39,6 +39,7 @@
 		position: relative;
 		box-shadow: var(--shadow-1);
 		outline: 1px black solid;
+		cursor: grab;
 		width: 80px;
 		height: 80px;
 

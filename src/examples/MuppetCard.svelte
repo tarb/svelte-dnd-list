@@ -12,7 +12,7 @@
 
 <div class="card" class:compact class:dragging>
 	<!-- data-dndhanle enables this as a drag handle, draggable false removes the default html image drage ability -->
-	<img data-dndhandle draggable="false" src={data?.image} alt={data?.name} />
+	<img data-dnd-handle draggable="false" src={data?.image} alt={data?.name} />
 	{#if !compact}
 		<div class="details" transition:fly|local={{ x: -200, y: 0, opacity: 1, duration: 100 }}>
 			<p class="name">{data?.name}</p>
