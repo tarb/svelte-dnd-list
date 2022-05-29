@@ -17,7 +17,7 @@ Below is a very simple example that shows reordering an array of numbers in a ve
 <svelte:options immutable={true} />
 
 <script lang="ts">
-	import DragDropList, { VerticalDropZone, reorder, type DropEvent } from '$lib';
+	import DragDropList, { VerticalDropZone, reorder, type DropEvent } from 'svelte-dnd-list';
 
 	let items = [1, 2, 3, 4, 5];
 

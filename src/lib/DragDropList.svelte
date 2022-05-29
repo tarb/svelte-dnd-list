@@ -163,9 +163,7 @@
 		}
 
 		if (active) {
-			if (raf) {
-				cancelAnimationFrame(raf);
-			}
+			if (raf) cancelAnimationFrame(raf);
 			raf = requestAnimationFrame(() => {
 				raf = undefined;
 
@@ -276,7 +274,7 @@
 		document.removeEventListener('touchmove', onTouchDrag);
 		document.removeEventListener('touchend', onTouchDragEnd);
 
-		if (active) {
+		if (!active) {
 			return;
 		}
 
