@@ -22,24 +22,6 @@ export default class VerticalDropZone implements DropZone {
 		this.containerClass = 'vertical';
 	}
 
-	insideBounding(x: number, y: number): boolean {
-		const el = this.el;
-
-		let scrollTop = 0, scrollLeft = 0;
-		for (let e = el as HTMLElement; e; e = e.parentElement) {
-			scrollLeft += e.scrollLeft;
-			scrollTop += e.scrollTop;
-		}
-
-		const b = el.getBoundingClientRect();
-		const left = b.left + scrollLeft;
-		const right = b.right + scrollLeft;
-		const top = b.top + scrollTop;
-		const bottom = b.bottom + scrollTop;
-
-		return y > top && y < bottom && x > left && x < right;
-	}
-
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 
@@ -72,7 +54,6 @@ export default class VerticalDropZone implements DropZone {
 
 	styleSourceMove(hover: number, source: number, transition: boolean) {
 		const { items, itemSize } = this;
-
 		for (let i = 0; i < items.length; ++i) {
 			// move element to base
 			const base =

@@ -97,10 +97,12 @@
 			let:index
 			let:drag
 		>
+			{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'pool'}
+
 			<MuppetCard
 				data={pool[index]}
-				dragging={drag?.sourceIndex === index}
-				compact={shouldCompact(drag, true)}
+				dragging={isDragging}
+				compact={isDragging ? shouldCompact(drag, true) : true }
 			/>
 		</DragDropList>
 	</div>
@@ -120,10 +122,12 @@
 				let:index
 				let:drag
 			>
+				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierC'}
+
 				<MuppetCard
 					data={tierC[index]}
-					compact={shouldCompact(drag, false)}
-					dragging={drag?.sourceIndex === index}
+					dragging={isDragging}
+					compact={isDragging && shouldCompact(drag, false)}
 					onRemove={() => tierCList.move(index, 0, poolList.dropzone)}
 				/>
 			</DragDropList>
@@ -142,10 +146,12 @@
 				let:index
 				let:drag
 			>
+				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierB'}
+
 				<MuppetCard
 					data={tierB[index]}
-					compact={shouldCompact(drag, false)}
-					dragging={drag?.sourceIndex === index}
+					compact={isDragging && shouldCompact(drag, false)}
+					dragging={isDragging}
 					onRemove={() => tierBList.move(index, 0, poolList.dropzone)}
 				/>
 			</DragDropList>
@@ -164,10 +170,12 @@
 				let:index
 				let:drag
 			>
+				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierA'}
+
 				<MuppetCard
 					data={tierA[index]}
-					compact={shouldCompact(drag, false)}
-					dragging={drag?.sourceIndex === index}
+					compact={isDragging && shouldCompact(drag, false)}
+					dragging={isDragging}
 					onRemove={() => tierAList.move(index, 0, poolList.dropzone)}
 				/>
 			</DragDropList>
@@ -186,10 +194,12 @@
 				let:index
 				let:drag
 			>
+				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierS'}
+
 				<MuppetCard
 					data={tierS[index]}
-					compact={shouldCompact(drag, false)}
-					dragging={drag?.sourceIndex === index}
+					compact={isDragging && shouldCompact(drag, false)}
+					dragging={isDragging}
 					onRemove={() => tierSList.move(index, 0, poolList.dropzone)}
 				/>
 			</DragDropList>

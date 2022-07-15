@@ -28,7 +28,6 @@ export interface DropZone {
 	itemWidth(): number;
 	placeholderStyleStr(): string;
 
-	insideBounding(x: number, y: number): boolean;
 	pointIndex(x: number, y: number): number;
 	styleSourceMove(hover: number, source: number, transition: boolean): void;
 	styleSourceMissing(index: number): void;

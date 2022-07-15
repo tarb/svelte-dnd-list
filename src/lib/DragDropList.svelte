@@ -1,6 +1,8 @@
-<svelte:options immutable={true} />
+<svelte:options immutable={true} accessors={true} />
 
 <script lang="ts" context="module">
+	const ZONE_ATTR = 'data-dnd-zone';
+	const ZONE_SELECTOR = `[${ZONE_ATTR}]`;
 	const HANDLE_SELECTOR = '[data-dnd-handle]';
 	const DRAG_TOLERANCE = 5; //px
 	const dropzones = new Array<DropZone>();
@@ -8,11 +10,14 @@
 	let click: Click = undefined;
 	let active: Dragging = undefined;
 	let raf: number | undefined; // animation frame
+
+	const dragging = writable<Dragging|undefined>(undefined);
 </script>
 
 <script lang="ts">
 	import { onMount, createEventDispatcher } from 'svelte';
 	import { Direction, EventType } from './types';
+	import { writable } from 'svelte/store';
 	import type {
 		Dragging,
 		Click,
@@ -28,16 +33,14 @@
 	export let type: DropZoneConstuctable;
 
 	export let priority = 1;
-	export let itemClass: string = undefined;
-	export let zoneClass: string = undefined;
-	export let keyFn: (index: number) => any = (i) => i;
+	export let itemClass: string = '';
+	export let zoneClass: string = '';
+	export let keyFn: (index: number) => number|string = (i) => i;
 	export let useHandle = false;
 
 	export const dropzone: DropZone = new type(id, priority, itemCount, itemSize);
 	const dispatch = createEventDispatcher();
 
-	// use the module variable 'active' but update this on significant changes so the the props vars update
-	let dragging: Dragging;
 	let items: undefined[] = new Array(itemCount);
 
 	$: dropzone.id = id;
@@ -58,23 +61,17 @@
 		dropzones.sort((a, b) => b.priority - a.priority);
 
 		return () => {
-			dropzones.splice(
-				dropzones.findIndex((dz) => dz === dropzone),
-				1
-			);
+			dropzones.splice(dropzones.findIndex((dz) => dz === dropzone), 1);
 		};
 	});
 
 	function findDropZone(x: number, y: number): DropZone | undefined {
-		for (let i = 0; i < dropzones.length; ++i) {
-			const dz = dropzones[i];
+		const el = document.elementFromPoint(x, y)?.closest(ZONE_SELECTOR);
+		return el ? dropzones.find(dz => dz.el === el) : undefined;
 
-			if (dz.insideBounding(x, y)) {
-				return dz;
-			}
-		}
-
-		return undefined;
+		// const els = document.elementsFromPoint(x, y);
+		// const el = els.find(e => e.getAttribute('data-dnd-zone') !== null);
+		// return el !== undefined ? dropzones.find(dz => dz.el === el) : undefined;
 	}
 
 	function onMouseDown(e: MouseEvent, index: number) {
@@ -156,7 +153,7 @@
 				dragTop: click.dragTop,
 				onMoveResolve: undefined
 			};
-			dragging = active; // reactive value
+			$dragging = active; // reactive value
 			click = undefined;
 
 			document.body.style.cursor = 'grabbing';
@@ -194,10 +191,17 @@
 							hoverIndex: hoverIndex,
 							destZone: dest
 						};
-						dragging = active;
+						$dragging = active;
 					}
 
-					el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; height:${sourceZone.itemHeight()}px; width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
+					el.style.cssText = `position: fixed;
+						top: 0;
+						left: 0;
+						z-index:1000;
+						pointer-events:none;
+						cursor:grabbing;
+						height:${sourceZone.itemHeight()}px;
+						width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
 				} else {
 					// new zone
 					const enteredZone = dest !== drag.destZone;
@@ -235,7 +239,7 @@
 								hoverIndex: hoverIndex,
 								destZone: dest
 							};
-							dragging = active;
+							$dragging = active;
 						}
 
 						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events: none; cursor:grabbing; position:fixed; height:${dest.itemHeight()}px; width:${dest.itemWidth()}px; transition: height 0.2s cubic-bezier(0.2, 0, 0, 1); transform:translate(${tx}px,${ty}px); transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
@@ -249,7 +253,7 @@
 								hoverIndex: -1,
 								destZone: undefined
 							};
-							dragging = active;
+							$dragging = active;
 						}
 
 						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
@@ -375,7 +379,7 @@
 
 		active.onMoveResolve?.();
 		active = undefined;
-		dragging = undefined;
+		$dragging = undefined;
 	}
 
 	export async function move(
@@ -410,12 +414,12 @@
 			dropzone.styleSourceMove(srcIndex, srcIndex, false);
 			if (destZone !== dropzone) {
 				setTimeout(() => {
-					dragging?.type === EventType.Programatic && dropzone.styleSourceMissing(srcIndex);
+					active?.type === EventType.Programatic && dropzone.styleSourceMissing(srcIndex);
 				}, transitionDur * 0.4);
 				destZone.styleDestMove(destIndex);
 			} else {
 				setTimeout(() => {
-					dragging?.type === EventType.Programatic &&
+					active?.type === EventType.Programatic &&
 						dropzone.styleSourceMove(destIndex, srcIndex, true);
 				}, transitionDur * 0.25);
 			}
@@ -433,7 +437,7 @@
 				dragTop: 0,
 				onMoveResolve: resolve
 			};
-			dragging = active;
+			$dragging = active;
 
 			// style the moving element, to its final position/transition
 			{
@@ -463,7 +467,7 @@
 	{#each items as _, i (keyFn(i))}
 		<div
 			data-dnd-item
-			data-dnd-dragging={active?.sourceIndex === i || dragging === null ? true : undefined}
+			data-dnd-dragging={(active?.sourceIndex === i && active?.sourceZone.id === id) || $dragging === null ? true : undefined}
 			class={itemClass}
 			style={itemStyle}
 			bind:this={dropzone.items[i]}
@@ -472,7 +476,7 @@
 		>
 			<slot
 				index={i}
-				drag={dragging?.sourceIndex === i && dragging.sourceZone.id === id ? dragging : undefined}
+				drag={($dragging?.sourceZone?.id === id || $dragging?.destZone?.id === id) ? $dragging : undefined}
 			/>
 		</div>
 	{/each}
