@@ -4,7 +4,8 @@ export const enum Direction {
 }
 export const enum EventType {
 	Programatic = 0,
-	User = 1
+	UserDrag = 1,
+	UserCopy = 2,
 }
 
 export interface DropZoneConstuctable {
@@ -65,7 +66,7 @@ export interface Dragging {
 	dragLeft: number;
 
 	//
-	onMoveResolve?: () => void;
+	onResolve?: () => void;
 }
 
 export interface Click {

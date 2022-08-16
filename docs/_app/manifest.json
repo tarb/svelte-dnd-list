@@ -1,6 +1,6 @@
 {
   ".svelte-kit/runtime/client/start.js": {
-    "file": "start-c907a587.js",
+    "file": "start-50c646bb.js",
     "src": ".svelte-kit/runtime/client/start.js",
     "isEntry": true,
     "imports": [
@@ -35,14 +35,14 @@
     ]
   },
   "src/routes/index.svelte": {
-    "file": "pages/index.svelte-c14da1bb.js",
+    "file": "pages/index.svelte-52b5e8ec.js",
     "src": "src/routes/index.svelte",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_index-f8022b9b.js",
-      "_DragDropList-1da2c357.js",
-      "_VerticalDropZone-efd02404.js",
+      "_DragDropList-2e527793.js",
+      "_VerticalDropZone-71f730ca.js",
       "_paths-396f020f.js",
       "_index-0051cdc5.js"
     ],
@@ -51,13 +51,13 @@
     ]
   },
   "src/routes/programatic.svelte": {
-    "file": "pages/programatic.svelte-af3603d1.js",
+    "file": "pages/programatic.svelte-259393bd.js",
     "src": "src/routes/programatic.svelte",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_index-f8022b9b.js",
-      "_DragDropList-1da2c357.js",
+      "_DragDropList-2e527793.js",
       "_index-0051cdc5.js"
     ],
     "css": [
@@ -65,14 +65,14 @@
     ]
   },
   "src/routes/simple.svelte": {
-    "file": "pages/simple.svelte-ac80f960.js",
+    "file": "pages/simple.svelte-2251af6b.js",
     "src": "src/routes/simple.svelte",
     "isEntry": true,
     "isDynamicEntry": true,
     "imports": [
       "_index-f8022b9b.js",
-      "_DragDropList-1da2c357.js",
-      "_VerticalDropZone-efd02404.js",
+      "_DragDropList-2e527793.js",
+      "_VerticalDropZone-71f730ca.js",
       "_index-0051cdc5.js"
     ],
     "css": [
@@ -91,8 +91,8 @@
   "_paths-396f020f.js": {
     "file": "chunks/paths-396f020f.js"
   },
-  "_DragDropList-1da2c357.js": {
-    "file": "chunks/DragDropList-1da2c357.js",
+  "_DragDropList-2e527793.js": {
+    "file": "chunks/DragDropList-2e527793.js",
     "imports": [
       "_index-f8022b9b.js",
       "_index-0051cdc5.js"
@@ -101,10 +101,10 @@
       "assets/DragDropList-7e301182.css"
     ]
   },
-  "_VerticalDropZone-efd02404.js": {
-    "file": "chunks/VerticalDropZone-efd02404.js",
+  "_VerticalDropZone-71f730ca.js": {
+    "file": "chunks/VerticalDropZone-71f730ca.js",
     "imports": [
-      "_DragDropList-1da2c357.js"
+      "_DragDropList-2e527793.js"
     ]
   }
 }

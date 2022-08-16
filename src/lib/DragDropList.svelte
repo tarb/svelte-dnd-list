@@ -4,6 +4,8 @@
 	const ZONE_ATTR = 'data-dnd-zone';
 	const ZONE_SELECTOR = `[${ZONE_ATTR}]`;
 	const HANDLE_SELECTOR = '[data-dnd-handle]';
+	const COPY_ATTR = 'data-dnd-copy';
+	const PLACEHOLDER_ATTR = 'data-dnd-placeholder';
 	const DRAG_TOLERANCE = 5; //px
 	const dropzones = new Array<DropZone>();
 
@@ -11,7 +13,7 @@
 	let active: Dragging = undefined;
 	let raf: number | undefined; // animation frame
 
-	const dragging = writable<Dragging|undefined>(undefined);
+	const dragging = writable<Dragging | undefined>(undefined);
 </script>
 
 <script lang="ts">
@@ -35,8 +37,11 @@
 	export let priority = 1;
 	export let itemClass: string = '';
 	export let zoneClass: string = '';
-	export let keyFn: (index: number) => number|string = (i) => i;
+	export let keyFn: (index: number) => number | string = (i) => i;
 	export let useHandle = false;
+	export let allowDrag: (index: number) => boolean = () => true;
+	// export let allowDrop: (zone: DropZone) => boolean = () => true;
+	export let copy: boolean = false;
 
 	export const dropzone: DropZone = new type(id, priority, itemCount, itemSize);
 	const dispatch = createEventDispatcher();
@@ -44,7 +49,9 @@
 	let items: undefined[] = new Array(itemCount);
 
 	$: dropzone.id = id;
-	$: itemStyle = `${dropzone.direction === Direction.Vertical ? 'height' : 'width'}: ${itemSize}px;`;
+	$: itemStyle = `${
+		dropzone.direction === Direction.Vertical ? 'height' : 'width'
+	}: ${itemSize}px;`;
 
 	$: if (itemCount != dropzone.count || itemSize !== dropzone.itemSize) {
 		dropzone.count = itemCount;
@@ -61,13 +68,16 @@
 		dropzones.sort((a, b) => b.priority - a.priority);
 
 		return () => {
-			dropzones.splice(dropzones.findIndex((dz) => dz === dropzone), 1);
+			dropzones.splice(
+				dropzones.findIndex((dz) => dz === dropzone),
+				1
+			);
 		};
 	});
 
 	function findDropZone(x: number, y: number): DropZone | undefined {
 		const el = document.elementFromPoint(x, y)?.closest(ZONE_SELECTOR);
-		return el ? dropzones.find(dz => dz.el === el) : undefined;
+		return el ? dropzones.find((dz) => dz.el === el) : undefined;
 
 		// const els = document.elementsFromPoint(x, y);
 		// const el = els.find(e => e.getAttribute('data-dnd-zone') !== null);
@@ -77,6 +87,7 @@
 	function onMouseDown(e: MouseEvent, index: number) {
 		if (
 			e.button !== 0 ||
+			!allowDrag(index) ||
 			(useHandle && (e.target as HTMLDivElement).closest(HANDLE_SELECTOR) === null)
 		) {
 			return;
@@ -89,7 +100,10 @@
 	}
 
 	function onTouchDown(e: TouchEvent, index: number) {
-		if (useHandle && (e.target as HTMLDivElement).closest(HANDLE_SELECTOR) === null) {
+		if (
+			!allowDrag(index) ||
+			(useHandle && (e.target as HTMLDivElement).closest(HANDLE_SELECTOR) === null)
+		) {
 			return;
 		}
 
@@ -135,23 +149,38 @@
 				finalizeDrag();
 			}
 
-			const placeholder = document.createElement('div');
-			placeholder.style.cssText = dropzone.placeholderStyleStr();
-			placeholder.setAttribute('data-dnd-placeholder', '');
-			dropzone.el.appendChild(placeholder);
+			const resetZones = new Set([dropzone]);
+			let placeholder: HTMLDivElement;
+			let el: HTMLDivElement;
+			let type: EventType;
+
+			if (copy) {
+				type = EventType.UserCopy;
+				el = click.el.cloneNode(true) as HTMLDivElement;
+				el.setAttribute(COPY_ATTR, '');
+				document.body.appendChild(el);
+			} else {
+				type = EventType.UserDrag;
+				el = click.el;
+
+				placeholder = document.createElement('div');
+				placeholder.style.cssText = dropzone.placeholderStyleStr();
+				placeholder.setAttribute(PLACEHOLDER_ATTR, '');
+				dropzone.el.appendChild(placeholder);
+			}
 
 			active = {
-				type: EventType.User,
-				el: click.el,
+				type,
+				el,
 				placeholder,
-				resetZones: new Set([dropzone]),
+				resetZones,
 				sourceIndex: click.sourceIndex,
 				hoverIndex: undefined,
 				sourceZone: click.sourceZone,
 				destZone: dropzone,
 				dragLeft: click.dragLeft,
 				dragTop: click.dragTop,
-				onMoveResolve: undefined
+				onResolve: undefined
 			};
 			$dragging = active; // reactive value
 			click = undefined;
@@ -184,7 +213,7 @@
 					}
 
 					const hoverIndex = dest.pointIndex(pageX, pageY);
-					if (hoverIndex !== drag.hoverIndex || enteredZone) {
+					if (drag.type === EventType.UserDrag && (hoverIndex !== drag.hoverIndex || enteredZone)) {
 						dest.styleSourceMove(hoverIndex, sourceIndex, drag.hoverIndex !== undefined);
 						active = {
 							...active,
@@ -210,7 +239,7 @@
 					// lets tidy up the last dropzone
 					if (enteredZone) {
 						// source zone needs to render collapsing the missing item
-						if (drag.destZone === sourceZone) {
+						if (drag.type === EventType.UserDrag && drag.destZone === sourceZone) {
 							drag.destZone.styleSourceMissing(sourceIndex);
 							// other zones can just render back to normal
 						} else if (drag.destZone !== undefined) {
@@ -290,7 +319,7 @@
 			cancelAnimationFrame(raf);
 		}
 
-		const { el, destZone, sourceZone, sourceIndex } = active;
+		const { el, destZone, sourceZone, sourceIndex, type } = active;
 		const hoverIndex = active.hoverIndex ?? sourceIndex;
 
 		document.body.style.cursor = '';
@@ -302,7 +331,7 @@
 			width: number,
 			forceFinal: boolean = false;
 
-		if (destZone === sourceZone) {
+		if (destZone === sourceZone && type !== EventType.UserCopy) {
 			let widthLastOffset = 0;
 			let heightLastOffset = 0;
 
@@ -324,7 +353,7 @@
 			// finishing position
 			forceFinal =
 				el.style.transform === `translate(${tx}px, ${ty}px)` || el.style.transform === '';
-		} else if (destZone !== undefined) {
+		} else if (destZone !== undefined && destZone !== sourceZone) {
 			tx = destZone.dragXOffset(hoverIndex, destZone.count + 1);
 			ty = destZone.dragYOffset(hoverIndex, destZone.count + 1);
 
@@ -336,7 +365,9 @@
 			height = sourceZone.itemHeight();
 			width = sourceZone.itemWidth();
 
-			sourceZone.styleSourceMove(sourceIndex, sourceIndex, true);
+			if (type !== EventType.UserCopy) {
+				sourceZone.styleSourceMove(sourceIndex, sourceIndex, true);
+			}
 		}
 
 		el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; position:fixed; height:${height}px; width:${width}px; transform:translate(${tx}px,${ty}px); transition:transform 0.2s cubic-bezier(0.2,0,0,1), height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
@@ -348,8 +379,12 @@
 	}
 
 	function finalizeDrag(ev?: TransitionEvent) {
-		const { el, destZone, sourceZone, sourceIndex, resetZones, placeholder } = active;
+		const { el, destZone, sourceZone, sourceIndex, resetZones, placeholder, type } = active;
 		const hoverIndex = active.hoverIndex ?? sourceIndex; // if no drag action took place hover may be undef
+
+		if (el && type === EventType.UserCopy) {
+			el.remove();
+		}
 
 		if (ev && ev.target !== el) {
 			return;
@@ -377,7 +412,7 @@
 		resetZones.forEach((zone) => zone.styleRemove());
 		el.removeEventListener('transitionend', finalizeDrag);
 
-		active.onMoveResolve?.();
+		active.onResolve?.();
 		active = undefined;
 		$dragging = undefined;
 	}
@@ -435,7 +470,7 @@
 				destZone: destZone,
 				dragLeft: 0,
 				dragTop: 0,
-				onMoveResolve: resolve
+				onResolve: resolve
 			};
 			$dragging = active;
 
@@ -461,13 +496,77 @@
 			}
 		});
 	}
+
+	export async function remove(index: number, transitionDur: number = 500) {
+		return new Promise<void>((resolve, reject) => {
+			if (active !== undefined) {
+				resolve();
+				return;
+			}
+
+			const el = dropzone.items[index];
+			if (!el) {
+				resolve();
+				return;
+			}
+
+			// init element style
+			el.style.cssText = `height:${dropzone.itemHeight()}px; width:${dropzone.itemWidth()}px; position:fixed; opacity: 1;`;
+
+			// style the containers
+			dropzone.styleSourceMove(index, index, false);
+			setTimeout(() => {
+				active?.type === EventType.Programatic && dropzone.styleSourceMissing(index);
+			}, transitionDur * 0.4);
+
+			active = {
+				type: EventType.Programatic,
+				el,
+				placeholder: undefined,
+				resetZones: new Set([dropzone]),
+				sourceIndex: index,
+				hoverIndex: index,
+				sourceZone: dropzone,
+				destZone: undefined,
+				dragLeft: 0,
+				dragTop: 0,
+				onResolve: resolve
+			};
+			$dragging = active;
+
+			// style the moving element, to its final position/transition
+			{
+				const tx = dropzone.dragXOffset(index, dropzone.count + 1);
+				const ty = dropzone.dragYOffset(index, dropzone.count + 1);
+				const height = dropzone.itemHeight();
+				const width = dropzone.itemWidth();
+
+				el.addEventListener('transitionend', finalizeDrag);
+				el.style.cssText = `
+                position: fixed; 
+				top:0; left: 0;
+                height: ${height}px; 
+                width: ${width}px; 
+				opacity: 0.6;
+                transform: translate(${tx}px,${ty}px); 
+                transition:
+					opacity ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);
+                    transform ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+                    height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+                    width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);`;
+			}
+		});
+	}
 </script>
 
 <div data-dnd-zone class={`${zoneClass} ${dropzone.containerClass}`} bind:this={dropzone.el}>
 	{#each items as _, i (keyFn(i))}
 		<div
 			data-dnd-item
-			data-dnd-dragging={(active?.sourceIndex === i && active?.sourceZone.id === id) || $dragging === null ? true : undefined}
+			data-dnd-dragging={(active?.sourceIndex === i && active?.sourceZone.id === id) ||
+			$dragging === null
+				? true
+				: undefined}
 			class={itemClass}
 			style={itemStyle}
 			bind:this={dropzone.items[i]}
@@ -476,7 +575,9 @@
 		>
 			<slot
 				index={i}
-				drag={($dragging?.sourceZone?.id === id || $dragging?.destZone?.id === id) ? $dragging : undefined}
+				drag={$dragging?.sourceZone?.id === id || $dragging?.destZone?.id === id
+					? $dragging
+					: undefined}
 			/>
 		</div>
 	{/each}
