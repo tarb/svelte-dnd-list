@@ -26,6 +26,21 @@ export default class HorizontalCenterDropZone implements DropZone {
 		this.ro = browser ? new ResizeObserver(this.onResize.bind(this)) : undefined;
 		this.containerClass = 'horizontal center';
 	}
+	
+	scrollContainer(x: number, y: number): void {
+		const { el } = this;
+		const b = el.getBoundingClientRect();
+
+		const regionSize = b.width / 3;
+
+		if (x > b.left && x < (b.left + regionSize)) {
+			const dampening = ((x - b.left) / regionSize) * 10;
+			el.scrollLeft -= (10 - dampening);
+		} else if (x < b.right && x > (b.right - regionSize)) {
+			const dampening = ((b.right - x) / regionSize) * 10;
+			el.scrollLeft += (10 - dampening);
+		}
+	}
 
 	onResize(entries: ResizeObserverEntry[]) {
 		const w = entries[0].contentRect.width;
@@ -73,7 +88,7 @@ export default class HorizontalCenterDropZone implements DropZone {
 			return (index * this.itemSize) + padding + b.left;
 		}
 
-		return (index * this.itemSize) + b.left;
+		return (index * this.itemSize) + b.left - this.el.scrollLeft;
 	}
 
 	itemHeight(): number {
@@ -145,7 +160,11 @@ export default class HorizontalCenterDropZone implements DropZone {
 	}
 
 	styleDestMove(index: number) {
-		const { items, count, itemSize, elWidth } = this;
+		const { items, count, itemSize, elWidth, el } = this;
+
+		if (((items.length + 1) * itemSize) > elWidth) {
+			el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-right: ${itemSize}px;`;
+		}
 
 		// padding, but not enough room for another 1
 		if (count * itemSize < elWidth && (count + 1) * itemSize > elWidth) {
@@ -194,14 +213,13 @@ export default class HorizontalCenterDropZone implements DropZone {
 	}
 
 	styleDestReset() {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-bottom: 0px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
 			item &&
-				(items[
-					i
-				].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+				(items[i].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 		}
 	}
 
@@ -217,6 +235,7 @@ export default class HorizontalCenterDropZone implements DropZone {
 	styleContainerBaseStyle() {
 		this.ro.observe(this.el);
 		this.elWidth = this.el.clientWidth;
+		this.el.style.cssText = '';
 
 		const { items, itemSize } = this;
 		for (let i = 0; i < items.length; ++i) {

@@ -180,7 +180,7 @@
 				destZone: dropzone,
 				dragLeft: click.dragLeft,
 				dragTop: click.dragTop,
-				onResolve: undefined
+				onResolve: undefined,
 			};
 			$dragging = active; // reactive value
 			click = undefined;
@@ -190,7 +190,7 @@
 
 		if (active) {
 			if (raf) cancelAnimationFrame(raf);
-			raf = requestAnimationFrame(() => {
+			const dragFn = () => {
 				raf = undefined;
 
 				const drag = active;
@@ -288,7 +288,11 @@
 						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
 					}
 				}
-			});
+				
+				dest?.scrollContainer(pageX, pageY);
+				raf = requestAnimationFrame(dragFn);
+			};
+			raf = requestAnimationFrame(dragFn);
 		}
 	}
 
@@ -588,7 +592,8 @@
 		display: flex;
 		position: relative;
 		height: 100%;
-		max-width: 100%;
+		width: 100%;
+		overflow: auto;
 
 		&.horizontal {
 			flex-direction: row;

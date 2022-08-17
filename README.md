@@ -58,6 +58,7 @@ Below is a very simple example that shows reordering an array of numbers in a ve
 ## Examples
 
 * [Simple example](https://tarb.github.io/svelte-dnd-list/simple)
+* [Scrollable container example](https://tarb.github.io/svelte-dnd-list/scroll)
 * [Programatic control](https://tarb.github.io/svelte-dnd-list/programatic)
 * [Multiple lists, item morphing and programmatic moving.](https://tarb.github.io/svelte-dnd-list/)
 

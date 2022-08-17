@@ -22,9 +22,24 @@ export default class HorizontalDropZone implements DropZone {
 		this.containerClass = 'horizontal';
 	}
 
+	scrollContainer(x: number, y: number): void {
+		const { el } = this;
+		const b = el.getBoundingClientRect();
+
+		const regionSize = b.width / 3;
+
+		if (x > b.left && x < (b.left + regionSize)) {
+			const dampening = ((x - b.left) / regionSize) * 10;
+			el.scrollLeft -= (10 - dampening);
+		} else if (x < b.right && x > (b.right - regionSize)) {
+			const dampening = ((b.right - x) / regionSize) * 10;
+			el.scrollLeft += (10 - dampening);
+		}
+	}
+
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
-		
+
 		const b = el.getBoundingClientRect();
 		const left = b.left - el.scrollLeft + window.scrollX;
 		const rawOver = Math.floor((x - left) / itemSize);
@@ -38,7 +53,7 @@ export default class HorizontalDropZone implements DropZone {
 
 	dragXOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
-		return (index * this.itemSize) + b.left ;
+		return (index * this.itemSize) + b.left - this.el.scrollLeft;
 	}
 	dragYOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
@@ -96,7 +111,8 @@ export default class HorizontalDropZone implements DropZone {
 	}
 
 	styleDestMove(index: number) {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-right: ${itemSize}px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
@@ -112,7 +128,8 @@ export default class HorizontalDropZone implements DropZone {
 	}
 
 	styleDestReset() {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-bottom: 0px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
@@ -126,7 +143,8 @@ export default class HorizontalDropZone implements DropZone {
 	}
 
 	styleContainerBaseStyle() {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = '';
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];

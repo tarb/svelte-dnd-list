@@ -97,12 +97,12 @@
 			let:index
 			let:drag
 		>
-			{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'pool'}
+			{@const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'pool'}
 
 			<MuppetCard
 				data={pool[index]}
 				dragging={isDragging}
-				compact={isDragging ? shouldCompact(drag, true) : true }
+				compact={isDragging ? shouldCompact(drag, true) : true}
 			/>
 		</DragDropList>
 	</div>
@@ -110,6 +110,7 @@
 	<div class="tier-lists">
 		<div class="tier-list c">
 			<p>C Tier</p>
+
 			<DragDropList
 				bind:this={tierCList}
 				itemCount={tierC.length}
@@ -122,7 +123,7 @@
 				let:index
 				let:drag
 			>
-				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierC'}
+				{@const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierC'}
 
 				<MuppetCard
 					data={tierC[index]}
@@ -134,6 +135,7 @@
 		</div>
 		<div class="tier-list b">
 			<p>B Tier</p>
+
 			<DragDropList
 				bind:this={tierBList}
 				itemCount={tierB.length}
@@ -146,7 +148,7 @@
 				let:index
 				let:drag
 			>
-				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierB'}
+				{@const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierB'}
 
 				<MuppetCard
 					data={tierB[index]}
@@ -158,6 +160,7 @@
 		</div>
 		<div class="tier-list a">
 			<p>A Tier</p>
+
 			<DragDropList
 				bind:this={tierAList}
 				itemCount={tierA.length}
@@ -166,11 +169,11 @@
 				type={VerticalDropZone}
 				itemSize={100}
 				on:drop={onDrop}
-				keyFn={i => tierA[i].name}
+				keyFn={(i) => tierA[i].name}
 				let:index
 				let:drag
 			>
-				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierA'}
+				{@const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierA'}
 
 				<MuppetCard
 					data={tierA[index]}
@@ -182,6 +185,7 @@
 		</div>
 		<div class="tier-list s">
 			<p>S Tier</p>
+
 			<DragDropList
 				bind:this={tierSList}
 				itemCount={tierS.length}
@@ -194,7 +198,7 @@
 				let:index
 				let:drag
 			>
-				{ @const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierS'}
+				{@const isDragging = drag?.sourceIndex === index && drag?.sourceZone.id === 'tierS'}
 
 				<MuppetCard
 					data={tierS[index]}
@@ -214,15 +218,13 @@
 	}
 
 	.root {
-		width: 1260px;
+		// width: 1260px;
 		margin: 0 auto;
 	}
 
 	.pool {
-		height: 100px;
+		height: 120px;
 		margin-bottom: 20px;
-		width: 100%;
-		overflow: scroll;
 	}
 	.tier-lists {
 		display: flex;
@@ -233,8 +235,9 @@
 	}
 
 	.tier-list {
+		display: flex;
+		flex-direction: column;
 		min-width: 300px;
-		padding: 8px;
 		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
 		background-color: white;
 

@@ -22,6 +22,21 @@ export default class VerticalDropZone implements DropZone {
 		this.containerClass = 'vertical';
 	}
 
+	scrollContainer(x: number, y: number): void {
+		const { el } = this;
+		const b = el.getBoundingClientRect();
+
+		const regionSize = b.height / 3;
+
+		if (y > b.top && y < (b.top + regionSize)) {
+			const dampening = ((y - b.top) / regionSize) * 10;
+			el.scrollTop -= (10 - dampening);
+		} else if (y < b.bottom && y > (b.bottom - regionSize)) {
+			const dampening = ((b.bottom - y) / regionSize) * 10;
+			el.scrollTop += (10 - dampening);
+		}
+	}
+
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 
@@ -42,7 +57,7 @@ export default class VerticalDropZone implements DropZone {
 	}
 	dragYOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
-		return (index * this.itemSize) + b.top;
+		return (index * this.itemSize) + b.top - this.el.scrollTop;
 	}
 
 	itemHeight(): number {
@@ -97,7 +112,8 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	styleDestMove(index: number) {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-bottom: ${itemSize}px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
@@ -113,7 +129,8 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	styleDestReset() {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;		
+		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-bottom: 0px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
@@ -127,7 +144,8 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	styleContainerBaseStyle() {
-		const { items, itemSize } = this;
+		const { items, itemSize, el } = this;
+		el.style.cssText = '';
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
