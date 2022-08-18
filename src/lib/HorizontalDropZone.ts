@@ -41,7 +41,7 @@ export default class HorizontalDropZone implements DropZone {
 		const { el, itemSize, count } = this;
 
 		const b = el.getBoundingClientRect();
-		const left = b.left - el.scrollLeft + window.scrollX;
+		const left = b.left - el.scrollLeft;
 		const rawOver = Math.floor((x - left) / itemSize);
 
 		return Math.min(Math.max(rawOver, 0), count);

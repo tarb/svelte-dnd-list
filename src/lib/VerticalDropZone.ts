@@ -41,7 +41,7 @@ export default class VerticalDropZone implements DropZone {
 		const { el, itemSize, count } = this;
 
 		const b = el.getBoundingClientRect();
-		const top = b.top - el.scrollTop + window.scrollY;
+		const top = b.top - el.scrollTop;
 		const rawOver = Math.floor((y - top) / itemSize);
 
 		return Math.min(Math.max(rawOver, 0), count);

@@ -12,7 +12,7 @@
          type DropEvent,
      } from '$lib';
  
-     let items = Array.from(Array(40).keys()).map((_, i) => i + 1);
+     let items = Array.from(Array(400).keys()).map((_, i) => i + 1);
  
      function onDrop({ detail: { from, to } }: CustomEvent<DropEvent>) {
          if (!to || from === to) {
@@ -82,13 +82,14 @@
      .container {
          outline: 2px solid black;
          overflow: hidden;
+         flex-shrink: 0;
      }
      .container.y {
-         height: 60vh;
+         height: 1000px;
          width: 70px;
      }
      .container.x {
-         width: 500px;
+         width: 1000px;
          height: 70px;
      }
      div.item {

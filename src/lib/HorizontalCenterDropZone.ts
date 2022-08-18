@@ -54,8 +54,8 @@ export default class HorizontalCenterDropZone implements DropZone {
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 		const b = el.getBoundingClientRect();
-		const left = b.left - el.scrollLeft + window.scrollX;
-		const top = b.top - el.scrollTop + window.scrollY;
+		const left = b.left - el.scrollLeft;
+		const top = b.top - el.scrollTop;
 
 		x = x - left;
 		y = y - top;

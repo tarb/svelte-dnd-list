@@ -17,9 +17,6 @@
 </script>
 
 <script lang="ts">
-	import { onMount, createEventDispatcher } from 'svelte';
-	import { Direction, EventType } from './types';
-	import { writable } from 'svelte/store';
 	import type {
 		Dragging,
 		Click,
@@ -28,6 +25,10 @@
 		Destination,
 		DropZoneConstuctable
 	} from './types';
+	import { onMount, createEventDispatcher } from 'svelte';
+	import { Direction, EventType } from './types';
+	import { writable } from 'svelte/store';
+	import { viewPortScroll } from './funcs';
 
 	export let id: string;
 	export let itemCount: number;
@@ -135,11 +136,23 @@
 	function onTouchDrag(e: TouchEvent) {
 		onDrag({
 			pageX: e.touches[0].pageX,
-			pageY: e.touches[0].pageY
+			pageY: e.touches[0].pageY,
+			clientX: e.touches[0].clientX,
+			clientY: e.touches[0].clientY
 		});
 	}
 
-	function onDrag({ pageX, pageY }: { pageX: number; pageY: number }) {
+	function onDrag({
+		pageX,
+		pageY,
+		clientX,
+		clientY
+	}: {
+		pageX: number;
+		pageY: number;
+		clientX: number;
+		clientY: number;
+	}) {
 		if (
 			active === undefined &&
 			(Math.abs(pageX - click.initPageX) > DRAG_TOLERANCE ||
@@ -178,9 +191,9 @@
 				hoverIndex: undefined,
 				sourceZone: click.sourceZone,
 				destZone: dropzone,
-				dragLeft: click.dragLeft,
-				dragTop: click.dragTop,
-				onResolve: undefined,
+				dragLeft: click.dragLeft - window.scrollX,
+				dragTop: click.dragTop - window.scrollY,
+				onResolve: undefined
 			};
 			$dragging = active; // reactive value
 			click = undefined;
@@ -196,10 +209,13 @@
 				const drag = active;
 				const { el, sourceZone, sourceIndex, dragLeft, dragTop } = drag;
 
-				const tx = pageX - dragLeft;
-				const ty = pageY - dragTop;
+				const tx = clientX - dragLeft;
+				const ty = clientY - dragTop;
 
-				let dest = findDropZone(pageX, pageY);
+				const posx = pageX - window.scrollX;
+				const posy = pageY - window.scrollY;
+
+				let dest = findDropZone(posx, posy);
 				if (dest === sourceZone) {
 					// same zone reorder
 					// style the dragging element
@@ -212,7 +228,7 @@
 						}
 					}
 
-					const hoverIndex = dest.pointIndex(pageX, pageY);
+					const hoverIndex = dest.pointIndex(posx, posy);
 					if (drag.type === EventType.UserDrag && (hoverIndex !== drag.hoverIndex || enteredZone)) {
 						dest.styleSourceMove(hoverIndex, sourceIndex, drag.hoverIndex !== undefined);
 						active = {
@@ -223,14 +239,20 @@
 						$dragging = active;
 					}
 
-					el.style.cssText = `position: fixed;
+					el.style.cssText = `
+						position: fixed;
 						top: 0;
 						left: 0;
 						z-index:1000;
 						pointer-events:none;
 						cursor:grabbing;
 						height:${sourceZone.itemHeight()}px;
-						width:${sourceZone.itemWidth()}px; transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1); position:fixed; transform:translate(${tx}px,${ty}px)`;
+						width:${sourceZone.itemWidth()}px; 
+						transform:translate(${tx}px,${ty}px);
+						transition: 
+							height 0.2s cubic-bezier(0.2, 0, 0, 1), 
+							width 0.2s cubic-bezier(0.2, 0, 0, 1);
+						`;
 				} else {
 					// new zone
 					const enteredZone = dest !== drag.destZone;
@@ -260,7 +282,7 @@
 						}
 
 						// and adjust the styles of the items and update dragging
-						const hoverIndex = dest.pointIndex(pageX, pageY);
+						const hoverIndex = dest.pointIndex(posx, posy);
 						if (hoverIndex !== drag.hoverIndex || enteredZone) {
 							dest.styleDestMove(hoverIndex);
 							active = {
@@ -271,7 +293,20 @@
 							$dragging = active;
 						}
 
-						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events: none; cursor:grabbing; position:fixed; height:${dest.itemHeight()}px; width:${dest.itemWidth()}px; transition: height 0.2s cubic-bezier(0.2, 0, 0, 1); transform:translate(${tx}px,${ty}px); transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+						el.style.cssText = `
+							position: fixed;
+							top: 0;
+							left: 0;
+							z-index:1000;
+							pointer-events: none;
+							cursor: grabbing;
+							height: ${dest.itemHeight()}px;
+							width: ${dest.itemWidth()}px;
+							transform: translate(${tx}px,${ty}px);
+							transition: 
+								height 0.2s cubic-bezier(0.2, 0, 0, 1), 
+								width 0.2s cubic-bezier(0.2, 0, 0, 1);
+						`;
 					} else {
 						// style the dragging element - it keeps its source dimensions as its not inside a drop zone
 
@@ -285,11 +320,27 @@
 							$dragging = active;
 						}
 
-						el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; pointer-events:none; cursor:grabbing; position:fixed; transform:translate(${tx}px,${ty}px); height:${drag.sourceZone.itemHeight()}px; width:${drag.sourceZone.itemWidth()}px;  transition:height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+						el.style.cssText = `
+							position: fixed;
+							top: 0;
+							left: 0;
+							z-index: 1000;
+							pointer-events: none;
+							cursor: grabbing;
+							height: ${drag.sourceZone.itemHeight()}px;
+							width: ${drag.sourceZone.itemWidth()}px;
+							transform: translate(${tx}px,${ty}px);
+							transition:
+								height 0.2s cubic-bezier(0.2, 0, 0, 1), 
+								width 0.2s cubic-bezier(0.2, 0, 0, 1);
+						`;
 					}
 				}
-				
-				dest?.scrollContainer(pageX, pageY);
+
+				// scroll global window & dnd window if needed
+				viewPortScroll(clientX, clientY, 120);
+				dest?.scrollContainer(posx, posy);
+
 				raf = requestAnimationFrame(dragFn);
 			};
 			raf = requestAnimationFrame(dragFn);
@@ -594,6 +645,7 @@
 		height: 100%;
 		width: 100%;
 		overflow: auto;
+		overflow-anchor: none;
 
 		&.horizontal {
 			flex-direction: row;
