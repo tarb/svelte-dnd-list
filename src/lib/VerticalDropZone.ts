@@ -22,21 +22,6 @@ export default class VerticalDropZone implements DropZone {
 		this.containerClass = 'vertical';
 	}
 
-	scrollContainer(x: number, y: number): void {
-		const { el } = this;
-		const b = el.getBoundingClientRect();
-
-		const regionSize = b.height / 3;
-
-		if (y > b.top && y < (b.top + regionSize)) {
-			const dampening = ((y - b.top) / regionSize) * 10;
-			el.scrollTop -= (10 - dampening);
-		} else if (y < b.bottom && y > (b.bottom - regionSize)) {
-			const dampening = ((b.bottom - y) / regionSize) * 10;
-			el.scrollTop += (10 - dampening);
-		}
-	}
-
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 

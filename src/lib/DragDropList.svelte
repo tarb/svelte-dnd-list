@@ -36,6 +36,7 @@
 	export let type: DropZoneConstuctable;
 
 	export let priority = 1;
+	export let scrollSpeed = 15;
 	export let itemClass: string = '';
 	export let zoneClass: string = '';
 	export let keyFn: (index: number) => number | string = (i) => i;
@@ -76,13 +77,10 @@
 		};
 	});
 
-	function findDropZone(x: number, y: number): DropZone | undefined {
-		const el = document.elementFromPoint(x, y)?.closest(ZONE_SELECTOR);
-		return el ? dropzones.find((dz) => dz.el === el) : undefined;
-
-		// const els = document.elementsFromPoint(x, y);
-		// const el = els.find(e => e.getAttribute('data-dnd-zone') !== null);
-		// return el !== undefined ? dropzones.find(dz => dz.el === el) : undefined;
+	function findDropZone(x: number, y: number): [Element, DropZone | undefined] {
+		const el = document.elementFromPoint(x, y);
+		const zone = el?.closest(ZONE_SELECTOR);
+		return [el, zone ? dropzones.find((dz) => dz.el === zone) : undefined];
 	}
 
 	function onMouseDown(e: MouseEvent, index: number) {
@@ -203,6 +201,8 @@
 
 		if (active) {
 			if (raf) cancelAnimationFrame(raf);
+
+			// todo, we should update the pageX/pageY fields with the scrolled ammount on repeating dragFn
 			const dragFn = () => {
 				raf = undefined;
 
@@ -215,7 +215,7 @@
 				const posx = pageX - window.scrollX;
 				const posy = pageY - window.scrollY;
 
-				let dest = findDropZone(posx, posy);
+				const [over, dest] = findDropZone(posx, posy);
 				if (dest === sourceZone) {
 					// same zone reorder
 					// style the dragging element
@@ -338,10 +338,9 @@
 				}
 
 				// scroll global window & dnd window if needed
-				viewPortScroll(clientX, clientY, 120);
-				dest?.scrollContainer(posx, posy);
-
-				raf = requestAnimationFrame(dragFn);
+				if (viewPortScroll(clientX, clientY, over, scrollSpeed)) {
+					raf = requestAnimationFrame(dragFn);
+				}
 			};
 			raf = requestAnimationFrame(dragFn);
 		}
@@ -425,7 +424,19 @@
 			}
 		}
 
-		el.style.cssText = `position: fixed; top: 0; left: 0; z-index:1000; position:fixed; height:${height}px; width:${width}px; transform:translate(${tx}px,${ty}px); transition:transform 0.2s cubic-bezier(0.2,0,0,1), height 0.2s cubic-bezier(0.2, 0, 0, 1), width 0.2s cubic-bezier(0.2, 0, 0, 1);`;
+		el.style.cssText = `
+			top: 0;
+			left: 0;
+			z-index: 1000;
+			position: fixed;
+			height: ${height}px;
+			width: ${width}px;
+			transform: translate(${tx}px,${ty}px);
+			transition: 
+				transform 0.2s cubic-bezier(0.2,0,0,1),
+				height 0.2s cubic-bezier(0.2, 0, 0, 1),
+				width 0.2s cubic-bezier(0.2, 0, 0, 1);
+		`;
 
 		// if a force was detected as needed, fire it off here
 		if (forceFinal) {
@@ -497,7 +508,13 @@
 				const height = dropzone.itemHeight();
 				const width = dropzone.itemWidth();
 
-				el.style.cssText = `z-index:1000; height:${height}px; width:${width}px; position:fixed; transform:translate(${tx}px,${ty}px)`;
+				el.style.cssText = `
+					z-index: 1000;
+					height: ${height}px;
+					width: ${width}px;
+					position: fixed;
+					transform: translate(${tx}px,${ty}px);
+				`;
 			}
 
 			// style the containers
@@ -538,20 +555,22 @@
 
 				el.addEventListener('transitionend', finalizeDrag);
 				el.style.cssText = `
-                z-index: 1000; 
-                position: fixed; 
-				top:0; left: 0;
-                height: ${height}px; 
-                width: ${width}px; 
-                transform: translate(${tx}px,${ty}px); 
-                transition:
-                    transform ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
-                    height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
-                    width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);`;
+					z-index: 1000; 
+					position: fixed; 
+					top:0; left: 0;
+					height: ${height}px; 
+					width: ${width}px; 
+					transform: translate(${tx}px,${ty}px); 
+					transition:
+						transform ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+						height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+						width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);
+				`;
 			}
 		});
 	}
 
+	// this could probably be rewritten better
 	export async function remove(index: number, transitionDur: number = 500) {
 		return new Promise<void>((resolve, reject) => {
 			if (active !== undefined) {
@@ -598,17 +617,18 @@
 
 				el.addEventListener('transitionend', finalizeDrag);
 				el.style.cssText = `
-                position: fixed; 
-				top:0; left: 0;
-                height: ${height}px; 
-                width: ${width}px; 
-				opacity: 0.6;
-                transform: translate(${tx}px,${ty}px); 
-                transition:
-					opacity ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);
-                    transform ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
-                    height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
-                    width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);`;
+					position: fixed; 
+					top:0; left: 0;
+					height: ${height}px; 
+					width: ${width}px; 
+					opacity: 0.6;
+					transform: translate(${tx}px,${ty}px); 
+					transition:
+						opacity ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);
+						transform ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+						height ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1), 
+						width ${transitionDur}ms cubic-bezier(0.2, 0, 0, 1);
+				`;
 			}
 		});
 	}

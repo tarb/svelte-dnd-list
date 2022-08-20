@@ -22,21 +22,6 @@ export default class HorizontalDropZone implements DropZone {
 		this.containerClass = 'horizontal';
 	}
 
-	scrollContainer(x: number, y: number): void {
-		const { el } = this;
-		const b = el.getBoundingClientRect();
-
-		const regionSize = b.width / 3;
-
-		if (x > b.left && x < (b.left + regionSize)) {
-			const dampening = ((x - b.left) / regionSize) * 10;
-			el.scrollLeft -= (10 - dampening);
-		} else if (x < b.right && x > (b.right - regionSize)) {
-			const dampening = ((b.right - x) / regionSize) * 10;
-			el.scrollLeft += (10 - dampening);
-		}
-	}
-
 	pointIndex(x: number, y: number): number {
 		const { el, itemSize, count } = this;
 

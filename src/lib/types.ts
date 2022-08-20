@@ -28,7 +28,6 @@ export interface DropZone {
 	itemHeight(): number;
 	itemWidth(): number;
 	placeholderStyleStr(): string;
-	scrollContainer(x: number, y: number): void;
 
 	pointIndex(x: number, y: number): number;
 	styleSourceMove(hover: number, source: number, transition: boolean): void;
