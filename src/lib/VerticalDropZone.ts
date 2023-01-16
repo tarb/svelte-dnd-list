@@ -42,7 +42,7 @@ export default class VerticalDropZone implements DropZone {
 	}
 	dragYOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
-		return (index * this.itemSize) + b.top - this.el.scrollTop;
+		return index * this.itemSize + b.top - this.el.scrollTop;
 	}
 
 	itemHeight(): number {
@@ -114,13 +114,15 @@ export default class VerticalDropZone implements DropZone {
 	}
 
 	styleDestReset() {
-		const { items, itemSize, el } = this;		
+		const { items, itemSize, el } = this;
 		el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-bottom: 0px;`;
 
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
 			item &&
-				(items[i].style.cssText = `transform:translateY(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); height: ${itemSize}px;`);
+				(items[
+					i
+				].style.cssText = `transform:translateY(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); height: ${itemSize}px;`);
 		}
 	}
 

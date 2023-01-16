@@ -1,6 +1,5 @@
 import type { DropZone } from './types';
 import { Direction } from './types';
-import { browser } from '$app/env';
 
 export default class HorizontalCenterDropZone implements DropZone {
 	direction: Direction = Direction.Horizontal;
@@ -23,7 +22,7 @@ export default class HorizontalCenterDropZone implements DropZone {
 		this.itemSize = itemSize;
 		this.items = new Array(count);
 		this.el = undefined;
-		this.ro = browser ? new ResizeObserver(this.onResize.bind(this)) : undefined;
+		this.ro = !import.meta.env.SSR ? new ResizeObserver(this.onResize.bind(this)) : undefined;
 		this.containerClass = 'horizontal center';
 	}
 
@@ -52,7 +51,7 @@ export default class HorizontalCenterDropZone implements DropZone {
 		}
 
 		const rawOver = Math.floor((x - padding) / itemSize);
-		const ind = Math.min(Math.max(rawOver, 0), count)
+		const ind = Math.min(Math.max(rawOver, 0), count);
 
 		return ind;
 	}
@@ -70,10 +69,10 @@ export default class HorizontalCenterDropZone implements DropZone {
 		const contentWidth = (count ?? this.count) * this.itemSize;
 		if (contentWidth < this.elWidth) {
 			const padding = (this.elWidth - contentWidth) / 2;
-			return (index * this.itemSize) + padding + b.left;
+			return index * this.itemSize + padding + b.left;
 		}
 
-		return (index * this.itemSize) + b.left - this.el.scrollLeft;
+		return index * this.itemSize + b.left - this.el.scrollLeft;
 	}
 
 	itemHeight(): number {
@@ -124,22 +123,27 @@ export default class HorizontalCenterDropZone implements DropZone {
 				const item = items[i];
 				item &&
 					i !== index &&
-					(items[i].style.cssText = `transform: translateX(${tranX}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+					(items[
+						i
+					].style.cssText = `transform: translateX(${tranX}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 			}
 		} else if ((count - 1) * itemSize < elWidth) {
 			for (let i = 0; i < count; ++i) {
 				const item = items[i];
 				item &&
 					i !== index &&
-					(items[i].style.cssText = `transform: translateX(${itemSize / 2
-						}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+					(items[i].style.cssText = `transform: translateX(${
+						itemSize / 2
+					}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 			}
 		} else {
 			for (let i = 0; i < count; ++i) {
 				const item = items[i];
 				item &&
 					i !== index &&
-					(items[i].style.cssText = `transform: translateX(0px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+					(items[
+						i
+					].style.cssText = `transform: translateX(0px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 			}
 		}
 	}
@@ -147,7 +151,7 @@ export default class HorizontalCenterDropZone implements DropZone {
 	styleDestMove(index: number) {
 		const { items, count, itemSize, elWidth, el } = this;
 
-		if (((items.length + 1) * itemSize) > elWidth) {
+		if ((items.length + 1) * itemSize > elWidth) {
 			el.style.cssText = `transition: padding-bottom 0.2s cubic-bezier(0.2, 0, 0, 1); padding-right: ${itemSize}px;`;
 		}
 
@@ -174,12 +178,14 @@ export default class HorizontalCenterDropZone implements DropZone {
 
 				if (i < index) {
 					item &&
-						(item.style.cssText = `transform: translateX(-${itemSize / 2
-							}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+						(item.style.cssText = `transform: translateX(-${
+							itemSize / 2
+						}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 				} else {
 					item &&
-						(item.style.cssText = `transform: translateX(${itemSize / 2
-							}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+						(item.style.cssText = `transform: translateX(${
+							itemSize / 2
+						}px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 				}
 			}
 		} else {
@@ -204,7 +210,9 @@ export default class HorizontalCenterDropZone implements DropZone {
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
 			item &&
-				(items[i].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+				(items[
+					i
+				].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 		}
 	}
 

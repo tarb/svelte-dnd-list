@@ -38,7 +38,7 @@ export default class HorizontalDropZone implements DropZone {
 
 	dragXOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
-		return (index * this.itemSize) + b.left - this.el.scrollLeft;
+		return index * this.itemSize + b.left - this.el.scrollLeft;
 	}
 	dragYOffset(index: number): number {
 		const b = this.el.getBoundingClientRect();
@@ -91,7 +91,9 @@ export default class HorizontalDropZone implements DropZone {
 			const item = items[i];
 			item &&
 				i !== index &&
-				(items[i].style.cssText = `transform: translateX(0px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+				(items[
+					i
+				].style.cssText = `transform: translateX(0px); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 		}
 	}
 
@@ -119,7 +121,9 @@ export default class HorizontalDropZone implements DropZone {
 		for (let i = 0; i < items.length; ++i) {
 			const item = items[i];
 			item &&
-				(items[i].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
+				(items[
+					i
+				].style.cssText = `transform:translateX(0px); transition:transform 0.2s cubic-bezier(0.2, 0, 0, 1); width: ${itemSize}px;`);
 		}
 	}
 
