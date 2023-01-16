@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Programatic from '../examples/Programatic.svelte';
+	import Programatic from '../../examples/Programatic.svelte';
 </script>
 
 <svelte:head>

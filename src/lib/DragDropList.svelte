@@ -37,13 +37,13 @@
 
 	export let priority = 1;
 	export let scrollSpeed = 15;
-	export let itemClass: string = '';
-	export let zoneClass: string = '';
+	export let itemClass = '';
+	export let zoneClass = '';
 	export let keyFn: (index: number) => number | string = (i) => i;
 	export let useHandle = false;
 	export let allowDrag: (index: number) => boolean = () => true;
 	// export let allowDrop: (zone: DropZone) => boolean = () => true;
-	export let copy: boolean = false;
+	export let copy = false;
 
 	export const dropzone: DropZone = new type(id, priority, itemCount, itemSize);
 	const dispatch = createEventDispatcher();
@@ -346,7 +346,7 @@
 		}
 	}
 
-	function onMouseDragEnd(e: MouseEvent) {
+	function onMouseDragEnd(_e: MouseEvent) {
 		document.removeEventListener('mousemove', onMouseDrag);
 		document.removeEventListener('mouseup', onMouseDragEnd);
 
@@ -357,7 +357,7 @@
 		onDragEnd();
 	}
 
-	function onTouchDragEnd(e: TouchEvent) {
+	function onTouchDragEnd(_e: TouchEvent) {
 		document.removeEventListener('touchmove', onTouchDrag);
 		document.removeEventListener('touchend', onTouchDragEnd);
 
@@ -383,7 +383,7 @@
 			ty: number,
 			height: number,
 			width: number,
-			forceFinal: boolean = false;
+			forceFinal = false;
 
 		if (destZone === sourceZone && type !== EventType.UserCopy) {
 			let widthLastOffset = 0;
@@ -487,9 +487,9 @@
 		srcIndex: number,
 		destIndex: number,
 		destZone: DropZone,
-		transitionDur: number = 500
+		transitionDur = 500
 	) {
-		return new Promise<void>((resolve, reject) => {
+		return new Promise<void>((resolve) => {
 			if (active !== undefined) {
 				resolve();
 				return;
@@ -571,8 +571,8 @@
 	}
 
 	// this could probably be rewritten better
-	export async function remove(index: number, transitionDur: number = 500) {
-		return new Promise<void>((resolve, reject) => {
+	export async function remove(index: number, transitionDur = 500) {
+		return new Promise<void>((resolve) => {
 			if (active !== undefined) {
 				resolve();
 				return;

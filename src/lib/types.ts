@@ -5,7 +5,7 @@ export const enum Direction {
 export const enum EventType {
 	Programatic = 0,
 	UserDrag = 1,
-	UserCopy = 2,
+	UserCopy = 2
 }
 
 export interface DropZoneConstuctable {

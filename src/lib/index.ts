@@ -1,4 +1,4 @@
-import DragDropList from "./DragDropList.svelte";
+import DragDropList from './DragDropList.svelte';
 import { reorder } from './funcs';
 import HorizontalCenterDropZone from './HorizontalCenterDropZone';
 import HorizontalDropZone from './HorizontalDropZone';

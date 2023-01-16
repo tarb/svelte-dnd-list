@@ -1,9 +1,9 @@
 <script lang="ts">
-    import Scrollable from '../examples/Scrollable.svelte';
+	import Simple from '../../examples/Simple.svelte';
 </script>
 
 <svelte:head>
 	<title>Svelte Dnd List - Example</title>
 </svelte:head>
 
-<Scrollable />
+<Simple />
